@@ -13,6 +13,7 @@ https://www.youtube.com/watch?v=OGQ-GZZ90oE
 Inlcluded in this reposity:
 - EagleCAD schematics and Board layout files (Eagle 9.1) 
 - Exported Gerber files (Gerber 274X)
+- STL files for the 3D printed case
 - Adrduino code
 
 # Hacking the code
