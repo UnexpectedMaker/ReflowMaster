@@ -3,7 +3,7 @@
 Reflow Master is my open source toaster oven reflow controller that I also sell full assembled on tindie:
 https://www.tindie.com/products/13378/
 
-![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pic_01.jpg)
+![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pict_01.jpg)
 
 It's custom hardware and custom code but all open source so if you want the challenge of making one yourself or you want to hack the code, go for it!
 
@@ -22,7 +22,7 @@ Inlcluded in this reposity:
 # Hacking the code
 The Reflow Master board presents itself as an "Adafruit Feather M0" - so you'll need to have the Adafruit Cortex m0 hardware profiles installed.
 
-![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pic_03.jpg)
+![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pict_03.jpg)
 
 You can find all of the Adafruit hardware by adding this to your Arduino IDE preferences in the "Additional Boards Manager" spot
 https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
