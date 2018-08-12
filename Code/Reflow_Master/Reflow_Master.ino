@@ -1,6 +1,6 @@
 /*
 ---------------------------------------------------------------------------
-Reflow Master Control - v1.0.0 - 01/07/2018
+Reflow Master Control - v1.0.0 - 01/08/2018
 
 AUTHOR/LICENSE:
 Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -19,6 +19,7 @@ This controller is the software that runs on the Reflow Master toaster oven cont
 
 HISTORY:
 01/08/2018 v1.0 - Initial release.
+13/08/2018 v1.01 - Settings UI button now change to show SELECT or CHANGE depending on what is selected
 
 ---------------------------------------------------------------------------
 */
@@ -28,13 +29,13 @@ HISTORY:
  */
 
 #include <SPI.h>
-#include <spline.h>
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
-#include "MAX31855.h"
-#include "OneButton.h"
-#include "ReflowMasterProfile.h"
-#include <FlashStorage.h>
+#include <spline.h> // http://github.com/kerinin/arduino-splines
+#include "Adafruit_GFX.h" // Library Manager
+#include "Adafruit_ILI9341.h" // Library Manager
+#include "MAX31855.h" // by Rob Tillaart Library Manager
+#include "OneButton.h" // Library Manager
+#include "ReflowMasterProfile.h" 
+#include <FlashStorage.h> // Library Manager
 
 // used to obtain the size of an array of any type
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
@@ -99,7 +100,7 @@ typedef struct {
   bool startFullBlast = false;
 } Settings;
 
-const String ver = "1.0";
+const String ver = "1.01";
 bool newSettings = false;
 
 long nextTempRead;
@@ -534,10 +535,13 @@ void loop()
           {
             float wantedTemp = CurrentGraph().wantedCurve[ (int)timeX ];
             DrawHeading( String( round( currentTemp ) ) + "/" + String( (int)wantedTemp )+"c", currentPlotColor, BLACK );
+
+#ifdef DEBUG
             tft.setCursor( 60, 40 );
             tft.setTextSize(2);
             tft.fillRect( 60, 40, 80, 20, BLACK );
             tft.println( String( round((currentDuty/256) * 100 )) +"%" );
+#endif
           }
         }
       }
@@ -978,12 +982,47 @@ void ShowMenuOptions( bool clearAll )
     tft.fillRect( tft.width()-5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
     println_Right( tft, "OVEN CHECK", tft.width()- 27, buttonPosY[3] + 8 );
   }
-  else if ( state == 11 || state == 12 )
+  else if ( state == 11 )
+  {
+    // button 0
+    tft.fillRect( tft.width()-100,  buttonPosY[0]-2, 100, buttonHeight+4, BLACK );
+    tft.fillRect( tft.width()-5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
+    switch ( settings_pointer )
+      {
+
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          println_Right( tft, "CHANGE", tft.width()- 27, buttonPosY[0] + 8 );
+          break;
+
+        default:
+          println_Right( tft, "SELECT", tft.width()- 27, buttonPosY[0] + 8 );
+          break;
+      }
+  
+     // button 1
+    tft.fillRect( tft.width()-5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
+    println_Right( tft, "BACK", tft.width()- 27, buttonPosY[1] + 8 );
+
+    // button 2
+    tft.fillRect( tft.width()-5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
+    println_Right( tft, "/\\", tft.width()- 27, buttonPosY[2] + 8 );
+
+    // button 3
+    tft.fillRect( tft.width()-5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
+    println_Right( tft, "\\/", tft.width()- 27, buttonPosY[3] + 8 );
+
+    UpdateSettingsPointer();
+  }
+  else if ( state == 12 )
   {
     // button 0
     tft.fillRect( tft.width()-5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
     println_Right( tft, "SELECT", tft.width()- 27, buttonPosY[0] + 8 );
-  
+
      // button 1
     tft.fillRect( tft.width()-5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
     println_Right( tft, "BACK", tft.width()- 27, buttonPosY[1] + 8 );
@@ -1357,7 +1396,7 @@ void UpdateSettingsPower( int posY )
 
 void UpdateSettingsLookAhead( int posY )
 {
-  tft.fillRect( 15,  posY-5, 220, 20, BLACK );
+  tft.fillRect( 15,  posY-5, 260, 20, BLACK );
   tft.setTextColor( WHITE, BLACK );
   
   tft.setCursor( 20, posY );
@@ -1526,7 +1565,8 @@ void button2Press()
     if ( state == 11 )
     {
       settings_pointer = constrain( settings_pointer -1, 0, 6 );
-      UpdateSettingsPointer();
+      ShowMenuOptions( false );
+      //UpdateSettingsPointer();
     }
     else if ( state == 12 )
     {
@@ -1551,7 +1591,8 @@ void button3Press()
     else if ( state == 11 )
     {
       settings_pointer = constrain( settings_pointer +1, 0, 6 );
-      UpdateSettingsPointer();
+      ShowMenuOptions( false );
+      //UpdateSettingsPointer();
     }
     else if ( state == 12 )
     {
@@ -1695,7 +1736,6 @@ void println_Right( Adafruit_ILI9341 &d, String heading, int centerX, int center
     d.setCursor( centerX + ( 18 - ww ), centerY - hh / 2);
     d.println( heading );
 }
-
 
 
 
