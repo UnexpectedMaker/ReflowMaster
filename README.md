@@ -19,6 +19,19 @@ Inlcluded in this reposity:
 - STL files for the 3D printed case
 - Adrduino code
 
+# Which TFT?
+The TFT I am using is a 2.4" SPI TFT using the ILI9341 Driver available via...
+
+AliExpress
+http://s.click.aliexpress.com/e/bQYyZYRe
+
+Ebay
+https://rover.ebay.com/rover/1/705-53470-19255-0/1?icep_id=114&ipn=icep&toolid=20004&campid=5338252684&mpre=https%3A%2F%2Fwww.ebay.com.au%2Fitm%2F2-4-240x320-SPI-TFT-LCD-Serial-240-320-ILI9341-PCB-Adapter-SD-Card-M52%2F291549777432%3FssPageName%3DSTRK%253AMEBIDX%253AIT%26_trksid%3Dp2057872.m2749.l2649
+
+# SAMD21 Bootloader
+You will need to use a SAMD21G18 that already has an Arduino bootloader on it. If you need to add a bootloader, you'll need an ATMEL ICE and an adapter for the chip. The cheapest adapter you cna get is my SAMD21G Mangler available here
+https://www.tindie.com/products/13379/
+
 # Hacking the code
 The Reflow Master board presents itself as an "Adafruit Feather M0" - so you'll need to have the Adafruit Cortex m0 hardware profiles installed.
 
