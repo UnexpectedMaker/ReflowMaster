@@ -39,6 +39,16 @@ The Reflow Master board presents itself as an "Adafruit Feather M0" - so you'll 
 
 You can find all of the Adafruit hardware by adding this to your Arduino IDE preferences in the "Additional Boards Manager" spot
 https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+
+You will also need the following lobraries installed
+- Spline library http://github.com/kerinin/arduino-splines
+
+Plus the following libraries from Library Manager
+- One Button
+- Adafruit_GFX
+- Adafruit_ILI9341
+- MAX31855 by Rob Tillaart
+- FlashStorage
    
 Enjoy!
 
