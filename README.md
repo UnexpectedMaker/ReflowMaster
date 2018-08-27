@@ -38,7 +38,7 @@ The Reflow Master board works like an "Adafruit Feather M0" - so you'll need to 
 ![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pict_03.jpg)
 
 You can use the instructions here to install everything you need to get up and running in the Arduino IDE:
-![Adafruit Feather m0](https://learn.adafruit.com/adafruit-feather-m0-basic-proto/setup)
+https://learn.adafruit.com/adafruit-feather-m0-basic-proto/setup
 
 You will also need the following lobraries installed
 - Spline library http://github.com/kerinin/arduino-splines
