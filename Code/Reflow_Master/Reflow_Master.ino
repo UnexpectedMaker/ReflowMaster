@@ -1,6 +1,6 @@
 /*
 ---------------------------------------------------------------------------
-Reflow Master Control - v1.0.0 - 01/08/2018
+Reflow Master Control - v1.0.2 - 27/08/2018
 
 AUTHOR/LICENSE:
 Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -18,8 +18,9 @@ PURPOSE:
 This controller is the software that runs on the Reflow Master toaster oven controller made by Unexpected Maker
 
 HISTORY:
-01/08/2018 v1.0 - Initial release.
-13/08/2018 v1.01 - Settings UI button now change to show SELECT or CHANGE depending on what is selected
+01/08/2018 v1.0   - Initial release.
+13/08/2018 v1.01  - Settings UI button now change to show SELECT or CHANGE depending on what is selected
+27/08/2018 v1.02  - Added tangents to the curve for ESP32 support, Improved graph curves, fixed some UI glitches, made end graph time value be the end profile time
 
 ---------------------------------------------------------------------------
 */
@@ -41,7 +42,7 @@ HISTORY:
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
 // used to show or hide serial debug output
-#define DEBUG
+//#define DEBUG
 
 // TFT SPI pins
 #define TFT_DC 0
@@ -100,7 +101,7 @@ typedef struct {
   bool startFullBlast = false;
 } Settings;
 
-const String ver = "1.01";
+const String ver = "1.02";
 bool newSettings = false;
 
 long nextTempRead;
@@ -136,6 +137,7 @@ unsigned int currentPlotColor = GREEN;
 bool isCuttoff = false;
 bool isFanOn = false;
 float lastWantedTemp = -1;
+int buzzerCount = 5;
 
 
 // Graph Size for UI
@@ -237,7 +239,7 @@ void SetCurrentGraph( int index )
 
   // Initialise the spline for the profile to allow for smooth graph display on UI
   timeX = 0;
-  baseCurve.setPoints(CurrentGraph().reflowGraphX, CurrentGraph().reflowGraphY, CurrentGraph().len);
+  baseCurve.setPoints(CurrentGraph().reflowGraphX, CurrentGraph().reflowGraphY, CurrentGraph().reflowTangents, CurrentGraph().len);
   baseCurve.setDegree( Hermite );
 
   // Re-interpolate data based on spline
@@ -523,7 +525,7 @@ void loop()
       {
         timeX++;
 
-        if ( timeX > 300 )
+        if ( timeX > CurrentGraph().completeTime )
         {
           EndReflow();
         }
@@ -531,7 +533,7 @@ void loop()
         {
           Graph(tft, timeX, currentTemp, 30, 220, 270, 180 );
 
-          if ( !isCuttoff )
+          if ( timeX < CurrentGraph().fanTime )
           {
             float wantedTemp = CurrentGraph().wantedCurve[ (int)timeX ];
             DrawHeading( String( round( currentTemp ) ) + "/" + String( (int)wantedTemp )+"c", currentPlotColor, BLACK );
@@ -697,15 +699,19 @@ void MatchTemp()
       }
       else // otherwise YELL at the user to open the oven door
       {
-        DrawHeading( "OPEN OVEN", RED, BLACK );
-        Buzzer( 1000, 2000 );
+        if ( buzzerCount > 0 )
+        {
+          DrawHeading( "OPEN OVEN", RED, BLACK );
+          Buzzer( 1000, 2000 );
+          buzzerCount--;
+        }
       }
     }
   }
   else
   {
     // YELL at the user to open the oven door
-    if ( !isCuttoff )
+    if ( !isCuttoff && set.useFan )
     {
       DrawHeading( "OPEN OVEN", GREEN, BLACK );
       Buzzer( 1000, 2000 );
@@ -1143,6 +1149,7 @@ void StartWarmup()
   timeX = 0;
   ShowMenuOptions( true );
   lastWantedTemp = -1;
+  buzzerCount = 5;
 
   tft.setTextColor( GREEN, BLACK );
   tft.setTextSize(3);
@@ -1652,7 +1659,11 @@ void SetupGraph(Adafruit_ILI9341 &d, double x, double y, double gx, double gy, d
       d.setTextSize(1);
       d.setTextColor(tcolor, bcolor);
       d.setCursor(temp, gy + 10);
-      println_Center(d, String(round(i)), temp, gy + 10 );
+
+      if ( i <= xhi - xinc )
+        println_Center(d, String(round(i)), temp, gy + 10 );
+      else
+        println_Center(d, String(round(xhi)), temp, gy + 10 );
     }
 
     //now draw the labels

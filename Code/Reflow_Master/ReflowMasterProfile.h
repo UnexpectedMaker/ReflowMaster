@@ -43,10 +43,12 @@ HISTORY:
       int tempDeg;
       float reflowGraphX[10];
       float reflowGraphY[10];
+      float reflowTangents[10] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
       float wantedCurve[350];
       int len = -1;
       int fanTime = -1;
       int offTime = -1;
+      int completeTime = -1;
 
       float maxWantedDelta = 0;
 
@@ -62,18 +64,31 @@ HISTORY:
        offTime = offT;
        fanTime = fanT;
 
+       
+//       for ( int i = 0; i < 10; i++ )
+//        reflowTangents[i] = -1;
+
        int minLength = min( 10, leng );
 
        len = minLength;
+
+       completeTime = flowX[ len -1 ];
 
        for ( int i = 0; i < minLength; i++ )
        {
         reflowGraphX[i] = flowX[i];
         reflowGraphY[i] = flowY[i];
+
+        if ( i == 0 )
+          reflowTangents[i] = 1;
+        else if ( i >= fanT )
+          reflowTangents[i] = 1;
+        else
+          reflowTangents[i] = 0;
        }
 
        for ( int i = 0; i < ELEMENTS(wantedCurve); i++ )
-        wantedCurve[i] = -1; 
+          wantedCurve[i] = -1; 
      }
      
      ~ReflowGraph()
