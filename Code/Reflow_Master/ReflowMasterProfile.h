@@ -44,6 +44,8 @@ HISTORY:
       float reflowGraphX[10];
       float reflowGraphY[10];
       float wantedCurve[350];
+      float tangents[10];
+
       int len = -1;
       int fanTime = -1;
       int offTime = -1;
@@ -70,6 +72,7 @@ HISTORY:
        {
         reflowGraphX[i] = flowX[i];
         reflowGraphY[i] = flowY[i];
+        tangents[i]     = 0;
        }
 
        for ( int i = 0; i < ELEMENTS(wantedCurve); i++ )
