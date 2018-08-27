@@ -42,12 +42,12 @@ https://learn.adafruit.com/adafruit-feather-m0-basic-proto/setup
 
 You will also need the following lobraries installed
 - Spline library http://github.com/kerinin/arduino-splines
+- MAX31855 library by Rob Tillaart https://github.com/RobTillaart/Arduino/tree/master/libraries/MAX31855
 
 Plus the following libraries from Library Manager
 - One Button
 - Adafruit_GFX
 - Adafruit_ILI9341
-- MAX31855 by Rob Tillaart
 - FlashStorage
    
 Enjoy!
