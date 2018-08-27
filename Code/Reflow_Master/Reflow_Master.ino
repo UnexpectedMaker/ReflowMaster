@@ -29,6 +29,33 @@ HISTORY:
  * NOTE: This is a work in progress...
  */
 
+
+/**
+ * START custom temperature sensor, ADS1x
+ */
+#include <Wire.h>
+#include <Adafruit_ADS1015.h>
+
+// Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
+Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
+
+#include <TypeK.h>
+TypeK TC_K;
+float Tsense;   // variable to store the measured temperature
+float Tcjc = 25.3;  // cold junction compensation temperature
+float mV   = 41.276;  // thermocouple mV reading
+
+int16_t results;
+/* Be sure to update this value based on the IC and the gain settings! */
+// float   multiplier = 3.0F;    /* ADS1015 @ +/- 6.144V gain (12-bit results) */
+float   multiplier = 0.125;    /* ADS1015 @ +/- 6.144V gain (12-bit results) */
+//float multiplier = 0.1875F; /* ADS1115  @ +/- 6.144V gain (16-bit results) */
+#define _SDA SDA
+#define _SCL SCL
+/**
+ * END
+ */
+
 #include <SPI.h>
 #include <spline.h> // http://github.com/kerinin/arduino-splines
 #include "Adafruit_GFX.h" // Library Manager
@@ -36,7 +63,7 @@ HISTORY:
 #include "MAX31855.h" // by Rob Tillaart Library Manager
 #include "OneButton.h" // Library Manager
 #include "ReflowMasterProfile.h" 
-#include <FlashStorage.h> // Library Manager
+// #include <FlashStorage.h> // Library Manager
 
 // used to obtain the size of an array of any type
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
@@ -44,6 +71,26 @@ HISTORY:
 // used to show or hide serial debug output
 //#define DEBUG
 
+#ifdef ESP32
+// TFT SPI pins
+#define TFT_DC 16
+#define TFT_CS 17
+#define TFT_RESET 1
+
+// MAX 31855 Pins
+#define MAXDO   11
+#define MAXCS   10
+#define MAXCLK  12
+
+#define BUTTON0 36 // menu buttons
+#define BUTTON1 39 // menu buttons
+#define BUTTON2 34 // menu buttons
+#define BUTTON3 35 // menu buttons
+
+#define BUZZER 32  // buzzer
+#define RELAY  33    // relay control
+#define FAN    25     // fan control
+#else
 // TFT SPI pins
 #define TFT_DC 0
 #define TFT_CS 3
@@ -62,6 +109,7 @@ HISTORY:
 #define BUZZER A4  // buzzer
 #define RELAY 5    // relay control
 #define FAN A5     // fan control
+#endif
 
 // Just a bunch of re-defined colours
 #define BLUE      0x001F
@@ -88,6 +136,12 @@ HISTORY:
 #define DKPINK    0x9009
 #define DKPURPLE  0x4010
 #define DKGREY    0x4A49
+
+// @note adding some color defines for customization, add all
+#define GRAPHA DKGREY
+#define GRAPHB GREY
+#define GRAPHC WHITE
+#define GRAPHD BLACK
 
 // Save data struct
 typedef struct {
@@ -166,7 +220,7 @@ OneButton button3(BUTTON3, false);
 // Initiliase a reference for the settings file that we store in flash storage
 Settings set;
 // Initialise flash storage
-FlashStorage(flash_store, Settings);
+// FlashStorage(flash_store, Settings); // @todo ifdef
 
 // This is where we initialise each of the profiles that will get loaded into the Reflkow Master
 void LoadPaste()
@@ -235,6 +289,7 @@ void SetCurrentGraph( int index )
   Serial.print("Setting Paste: ");
   Serial.println( CurrentGraph().n );
   Serial.println( CurrentGraph().t );
+  Serial.println( CurrentGraph().len );
 #endif
 
   // Initialise the spline for the profile to allow for smooth graph display on UI
@@ -245,9 +300,14 @@ void SetCurrentGraph( int index )
   // Re-interpolate data based on spline
   for( int ii = 0; ii <= graphRangeMax_X; ii+= 1 )
   {
+    Serial.println(ii);
+    Serial.println(baseCurve.value(ii));
     solderPaste[ currentGraphIndex ].wantedCurve[ii] = baseCurve.value(ii);
+    // solderPaste[ currentGraphIndex ].wantedCurve[ii] = random(200);
+    delay(0);
   }
 
+  Serial.print("DONE ");
   // calculate the biggest graph movement delta
   float lastWanted = -1;
   for ( int i = 0; i < solderPaste[ currentGraphIndex ].offTime; i++ )
@@ -262,14 +322,33 @@ void SetCurrentGraph( int index )
           solderPaste[ currentGraphIndex ].maxWantedDelta = wantedDiff;
       }
       lastWanted  = wantedTemp;
+      delay(0);
   }
+}
+
+// @todo abstract pwm relay control, esp32 use sigmadelta or ledc
+void setupRelay(){
+    sigmaDeltaSetup(0, 312500);
+    //attach pin 18 to channel 0
+    sigmaDeltaAttachPin(RELAY,0);
+    //initialize channel 0 to off
+    sigmaDeltaWrite(0, 0);
+}
+
+void writeRelay(int value){
+    sigmaDeltaWrite(0,value);
 }
 
 void setup()
 {
+
+  initTemp();
+
   // Setup all GPIO
   pinMode( BUZZER, OUTPUT );
-  pinMode( RELAY, OUTPUT );
+
+  // pinMode( RELAY, OUTPUT );
+  setupRelay();
   pinMode( FAN, OUTPUT );
   
   pinMode( BUTTON0, INPUT );
@@ -288,14 +367,14 @@ void setup()
   delay(500);
 
   // load settings from FLASH
-  set = flash_store.read();
+  // set = flash_store.read(); // @todo abstract
 
   // If no settings were loaded, initialise data and save
   if ( !set.valid )
   {
     SetDefaults();
     newSettings = true;
-    flash_store.write(set);
+    // flash_store.write(set); // @todo abstract
   }
 
   // Attatch button IO for OneButton
@@ -332,8 +411,21 @@ void setup()
 
   // Show the main menu
   ShowMenu();
+  delay(1000);
+  StartReflow();  
 }
 
+// @note modified for dev testing
+// @todo refactor to allow dev simulations
+void _loop(){
+  delay(1000);
+  currentTemp = 28;
+  lastTemp = currentTemp;
+  StartWarmup();
+  delay(1000);
+  state = 2;
+  StartReflow();  
+}
 
 void loop()
 {
@@ -342,7 +434,6 @@ void loop()
   button1.tick();
   button2.tick();
   button3.tick();
-
   // Current activity state machine
   if ( state == 0 ) // BOOT
   {
@@ -353,10 +444,9 @@ void loop()
     if ( nextTempRead < millis() ) // we only read the probe every second
     {
       nextTempRead = millis() + 1000;
-  
+      
       ReadCurrentTemp();
       MatchTemp();
-
       if ( currentTemp >= GetGraphValue(0) )
       {
         // We have reached the starting temp for the profile, so lets start baking our boards!
@@ -558,7 +648,8 @@ void SetRelayFrequency( int duty )
   currentDuty = ((float)duty * set.power );
 
   // Write the clamped duty cycle to the RELAY GPIO
-  analogWrite( RELAY, constrain( round( currentDuty ), 0, 255) );
+  // analogWrite( RELAY, constrain( round( currentDuty ), 0, 255) );
+  sigmaDeltaWrite(0,constrain( round( currentDuty ), 0, 255)); // @todo abstract, NOT TESTED
 
 #ifdef DEBUG
   Serial.print("RELAY Duty Cycle: ");
@@ -629,9 +720,10 @@ void MatchCalibrationTemp()
 // Read the temp probe
 void ReadCurrentTemp()
 {
-  int status = tc.read();
-  float internal = tc.getInternal();
-  currentTemp = tc.getTemperature() + set.tempOffset;
+  // int status = tc.read();
+  // float internal = tc.getInternal();
+  // currentTemp = tc.getTemperature() + set.tempOffset;
+  updateTemp(); // @note replacing with tests and adc testing (not reliant on max 31855)
 }
 
 // This is where the magic happens for temperature matching
@@ -791,7 +883,7 @@ void DrawHeading( String lbl, unsigned int acolor, unsigned int bcolor )
 // buzz he buzzer
 void Buzzer( int hertz, int len )
 {
-   tone( BUZZER, hertz, len);
+   // tone( BUZZER, hertz, len); // @todo esp32 no pwn or tone
 }
 
 
@@ -836,7 +928,7 @@ void ShowMenu()
   state = 10;
   SetRelayFrequency( 0 );
 
-  set = flash_store.read();
+  // set = flash_store.read(); // @todo abstract
     
   tft.fillScreen(BLACK);
 
@@ -1167,7 +1259,7 @@ void StartReflow()
    ShowMenuOptions( true );
   
   timeX = 0;
-  SetupGraph(tft, 0, 0, 30, 220, 270, 180, graphRangeMin_X, graphRangeMax_X, graphRangeStep_X, graphRangeMin_Y, graphRangeMax_Y, graphRangeStep_Y, "Reflow Temp", " Time [s]", "deg [C]", DKBLUE, BLUE, WHITE, BLACK );
+  SetupGraph(tft, 0, 0, 30, 220, 270, 180, graphRangeMin_X, graphRangeMax_X, graphRangeStep_X, graphRangeMin_Y, graphRangeMax_Y, graphRangeStep_Y, "Reflow Temp", " Time [s]", "deg [C]", GRAPHA,GRAPHB,GRAPHC,GRAPHD );
   
   DrawHeading( "READY", WHITE, BLACK );
   DrawBaseGraph();
@@ -1224,7 +1316,7 @@ void ResetSettingsToDefault()
 {
   // set default values again and save
   SetDefaults();
-  flash_store.write(set);
+  // flash_store.write(set); // @todo abstract
 
   // load the default paste
   SetCurrentGraph( set.paste );
@@ -1447,6 +1539,9 @@ long nextButtonPress = 0;
 
 void button0Press()
 {
+  // @todo use state machine instead, use flags for start reflow, remove from button callback scope
+  // so that these are all in global scope and can be refactored,methodized and unit tested
+  // maybe add enums for states for clarity
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20; 
@@ -1547,7 +1642,7 @@ void button1Press()
     else if ( state == 11 ) // leaving settings so save
     {
       // save data in flash
-      flash_store.write(set);
+      // flash_store.write(set); // @todo abstract
       ShowMenu();
     }
     else if ( state == 12 || state == 13 )
@@ -1749,4 +1844,22 @@ void println_Right( Adafruit_ILI9341 &d, String heading, int centerX, int center
 }
 
 
+void tester(){
+  currentTemp = 28;
+  // state = 2; // start
+  // if(state != 2) StartWarmup();
+}
 
+void updateTemp(){
+  results = ads.readADC_Differential_0_1();
+  mV      = results * multiplier;
+  Tsense  = TC_K.Temp_C(mV, Tcjc); // C compensated
+  currentTemp = round(Tsense + set.tempOffset);
+  Serial.println(currentTemp);
+}
+
+void initTemp(){
+  ads.setGain(GAIN_SIXTEEN);    // 16x gain  +/- 0.256V  1 bit = 0.125mV  0.0078125mV  
+  ads.begin();
+  Wire.begin(_SDA,_SCL);
+}
