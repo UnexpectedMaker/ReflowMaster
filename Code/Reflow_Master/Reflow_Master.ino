@@ -71,6 +71,7 @@ float   multiplier = 0.125;    /* ADS1015 @ +/- 6.144V gain (12-bit results) */
 // used to show or hide serial debug output
 //#define DEBUG
 
+#ifdef ESP32
 // TFT SPI pins
 #define TFT_DC 16
 #define TFT_CS 17
@@ -89,6 +90,26 @@ float   multiplier = 0.125;    /* ADS1015 @ +/- 6.144V gain (12-bit results) */
 #define BUZZER 32  // buzzer
 #define RELAY  33    // relay control
 #define FAN    25     // fan control
+#else
+// TFT SPI pins
+#define TFT_DC 0
+#define TFT_CS 3
+#define TFT_RESET 1
+
+// MAX 31855 Pins
+#define MAXDO   11
+#define MAXCS   10
+#define MAXCLK  12
+
+#define BUTTON0 A0 // menu buttons
+#define BUTTON1 A1 // menu buttons
+#define BUTTON2 A2 // menu buttons
+#define BUTTON3 A3 // menu buttons
+
+#define BUZZER A4  // buzzer
+#define RELAY 5    // relay control
+#define FAN A5     // fan control
+#endif
 
 // Just a bunch of re-defined colours
 #define BLUE      0x001F
