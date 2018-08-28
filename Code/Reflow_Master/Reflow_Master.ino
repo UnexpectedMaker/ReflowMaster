@@ -1,6 +1,6 @@
 /*
 ---------------------------------------------------------------------------
-Reflow Master Control - v1.0.2 - 27/08/2018
+Reflow Master Control - v1.0.3 - 28/08/2018
 
 AUTHOR/LICENSE:
 Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -21,7 +21,7 @@ HISTORY:
 01/08/2018 v1.0   - Initial release.
 13/08/2018 v1.01  - Settings UI button now change to show SELECT or CHANGE depending on what is selected
 27/08/2018 v1.02  - Added tangents to the curve for ESP32 support, Improved graph curves, fixed some UI glitches, made end graph time value be the end profile time
-
+28/08/2018 v1.03  - Added some graph smoothig
 ---------------------------------------------------------------------------
 */
 
@@ -101,10 +101,14 @@ typedef struct {
   bool startFullBlast = false;
 } Settings;
 
-const String ver = "1.02";
+const String ver = "1.03";
 bool newSettings = false;
 
 long nextTempRead;
+long nextTempAvgRead;
+int avgReadCount = 0;
+
+
 double timeX = 0;
 double tempOffset = 60;
 
@@ -131,6 +135,7 @@ float calibrationRiseVal = 0;
 // Runtime reflow variables
 float currentDuty = 0;
 float currentTemp = 0;
+float currentTempAvg = 0;
 float lastTemp = -1;
 float currentDetla = 0;
 unsigned int currentPlotColor = GREEN;
@@ -361,6 +366,9 @@ void loop()
       {
         // We have reached the starting temp for the profile, so lets start baking our boards!
         lastTemp = currentTemp;
+        avgReadCount = 0;
+        currentTempAvg = 0;
+        
         StartReflow();
       }
       else if ( currentTemp > 0 )
@@ -514,13 +522,24 @@ void loop()
   }
   else // state is 2 - REFLOW
   {
+    if ( nextTempAvgRead < millis() )
+    {
+      nextTempAvgRead = millis() + 100;
+      ReadCurrentTempAvg();
+    }
     if ( nextTempRead < millis() )
     {
       nextTempRead = millis() + 1000;
-  
-      ReadCurrentTemp();
+
+      // Set the temp from the average
+      currentTemp = ( currentTempAvg / avgReadCount );
+      // clear the variables for next run
+      avgReadCount = 0;
+      currentTempAvg = 0;
+
+      // Control the SSR
       MatchTemp();
-  
+
       if ( currentTemp > 0 )
       {
         timeX++;
@@ -626,10 +645,32 @@ void MatchCalibrationTemp()
  * SOME CALIBRATION CODE THAT IS CURRENTLY USED FOR THE OVEN CHECK SYSTEM
  */
 
+
+void ReadCurrentTempAvg()
+{
+  int status = tc.read();
+
+  #ifdef DEBUG
+  Serial.print(" avg : ");
+  Serial.print( currentTempAvg );
+  Serial.print(" avg count: ");
+  Serial.println( avgReadCount );
+  #endif
+  
+  float internal = tc.getInternal();
+  currentTempAvg += tc.getTemperature() + set.tempOffset;
+  avgReadCount++;
+}
+
+
 // Read the temp probe
 void ReadCurrentTemp()
 {
   int status = tc.read();
+  #ifdef DEBUG
+  Serial.print(" status: ");
+  Serial.println( status );
+  #endif
   float internal = tc.getInternal();
   currentTemp = tc.getTemperature() + set.tempOffset;
 }
@@ -1690,13 +1731,17 @@ void Graph(Adafruit_ILI9341 &d, double x, double y, double gx, double gy, double
   // recall that ox and oy are initialized as static above
   x =  (x - graphRangeMin_X) * ( w) / (graphRangeMax_X - graphRangeMin_X) + gx;
   y =  (y - graphRangeMin_Y) * (gy - h - gy) / (graphRangeMax_Y - graphRangeMin_Y) + gy;
-
-  oy = min( oy, y );
+  
+  if ( timeX < 2 )
+    oy = min( oy, y );
+    
   y = min( y, 220 ); // bottom of graph!
 
-  d.drawLine(ox, oy, x, y, currentPlotColor );
+//  d.fillRect( ox-1, oy-1, 3, 3, currentPlotColor );
+
   d.drawLine(ox, oy + 1, x, y + 1, currentPlotColor);
   d.drawLine(ox, oy - 1, x, y - 1, currentPlotColor);
+  d.drawLine(ox, oy, x, y, currentPlotColor );
   ox = x;
   oy = y;
 }
