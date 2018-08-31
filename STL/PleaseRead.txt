@@ -1,0 +1,6 @@
+My first 8 Reflow Masters shipped with a 5mm header for the TFT screen to connect to, but I've found it increasingly harder to source 5mm headers cheaply, so I have moved to 8.5mm headers instead.
+I have provided 2 case fronts, one for 5mm header and one for 8.5mm header.
+If you are printing your own case to go with a Reflow Master you ordered from me from tindie, please check which header width you have before you print your case.
+Cheers
+Seon
+Unexpected Maker
