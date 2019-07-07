@@ -19,6 +19,7 @@ This is the profile structure used by the Reflow Master toaster oven controller 
 
 HISTORY:
 01/08/2018 v1.0 - Initial release.
+20/05/2019 v1.04 - Increased max curve to support profiles up to 8mins
 
 ---------------------------------------------------------------------------
   Each profile is initialised with the follow data:
@@ -44,7 +45,7 @@ HISTORY:
       float reflowGraphX[10];
       float reflowGraphY[10];
       float reflowTangents[10] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-      float wantedCurve[350];
+      float wantedCurve[480];
       int len = -1;
       int fanTime = -1;
       int offTime = -1;
@@ -63,10 +64,6 @@ HISTORY:
        tempDeg = temp;
        offTime = offT;
        fanTime = fanT;
-
-       
-//       for ( int i = 0; i < 10; i++ )
-//        reflowTangents[i] = -1;
 
        int minLength = min( 10, leng );
 
