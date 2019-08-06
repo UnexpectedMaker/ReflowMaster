@@ -19,6 +19,9 @@ Inlcluded in this reposity:
 - STL files for the 3D printed case
 - Adrduino code
 
+# Open Source License
+The hardware design files are released as open source under the CERN license. Please review the license before using these files in your own projects to understand your obligations.
+
 # STL files for 3D printing
 I have included the STL files for the case and also the exhaust fan adapter I made for my specific toaster oven. 
 
