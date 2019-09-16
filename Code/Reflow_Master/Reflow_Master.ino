@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v1.0.5 - 07/09/2019.
+  Reflow Master Control - v1.0.6 - 19/09/2019.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -25,7 +25,8 @@
   20/05/2019 v1.04  - Increased max curve to support profiles up to 8mins
                     - Added fan on time after reflow for cooldown settings
                     - Added extra profile for Ju Feng Medium temp paste
-  07/09/2019 v1.05  - Fixed some bugs, Thanks Tablatronix!
+  09/07/2019 v1.05  - Fixed some bugs, Thanks Tablatronix!
+  16/09/2019 v1.06  - Fixed probe offset temp not changing in settings
   ---------------------------------------------------------------------------
 */
 
@@ -1653,7 +1654,7 @@ void button0Press()
 
         UpdateSettingsPower( 121 );
       }
-      else if ( settings_pointer == 45 ) // change temp probe offset
+      else if ( settings_pointer == 5 ) // change temp probe offset
       {
         set.tempOffset += 1;
         if ( set.tempOffset > 15 )
