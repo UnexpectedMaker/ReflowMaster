@@ -37,10 +37,14 @@ Ebay
 https://rover.ebay.com/rover/1/705-53470-19255-0/1?icep_id=114&ipn=icep&toolid=20004&campid=5338252684&mpre=https%3A%2F%2Fwww.ebay.com.au%2Fitm%2F2-4-240x320-SPI-TFT-LCD-Serial-240-320-ILI9341-PCB-Adapter-SD-Card-M52%2F291549777432%3FssPageName%3DSTRK%253AMEBIDX%253AIT%26_trksid%3Dp2057872.m2749.l2649
 
 # SAMD21 Bootloader
-You will need to use a SAMD21G18 that already has an Arduino bootloader on it *before* it is put on the board. If you need to add a bootloader, you'll need an ATMEL ICE and an adapter for the chip. The cheapest adapter you can get is my SAMD21G Mangler available here...
+If you build your own Reflow Master, you will need to use a SAMD21G18 that already has an Arduino bootloader on it *before* it is put on the board. If you need to add a bootloader, you'll need an ATMEL ICE and an adapter for the chip. The cheapest adapter you can get is my SAMD21G Mangler available here...
 https://www.tindie.com/products/13379/
 
-# Hacking the code
+# Hacking the code - Adding profiles
+You can flash your Reflow Master with the Arduino IDE using the code provided above.
+
+If you wish to add or change any of the reflow profiles, you need to do so in the code and re-flash the changes to your Reflow Master.
+
 The Reflow Master board works like an "Adafruit Feather M0" - so you'll need to have the Adafruit Cortex m0 hardware profiles installed as well as the regular Cortex m0 Arduino profiles.
 
 ![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pict_03.jpg)
@@ -57,6 +61,9 @@ Plus the following libraries from Library Manager
 - Adafruit_GFX
 - Adafruit_ILI9341
 - FlashStorage
+   
+The easiest way to put a new profile into the code is to change one of the existing profiles, by altering the values in it's class initialiser. Information of what each value is is available in the ReflowMasterProfile.h file:
+https://github.com/UnexpectedMaker/ReflowMaster/blob/master/Code/Reflow_Master/ReflowMasterProfile.h
    
 Enjoy!
 
