@@ -13,7 +13,7 @@ https://www.youtube.com/watch?v=OGQ-GZZ90oE
 
 # ReflowMaster Design Files
 
-Inlcluded in this reposity:
+Included in this repository:
 - EagleCAD schematics and Board layout files (Eagle 9.1) 
 - Exported Gerber files (Gerber 274X)
 - STL files for the 3D printed case
@@ -25,7 +25,7 @@ The hardware design files are released as open source under the CERN license. Pl
 # STL files for 3D printing
 I have included the STL files for the case and also the exhaust fan adapter I made for my specific toaster oven. 
 
-**NOTE:** Do not print the exhauist fan in PLA, please use PETG or ABS as PLA warps/melts at a low temp. Also DO NOT connect the 3D printed exhaust fan directly to the metal of teh oven, it will melt and ruin your oven. You will need to add some heat resistant insulator between the metal and the 3D print. 
+**NOTE:** Do not print the exhaust fan in PLA, please use PET-G or ABS as PLA warps/melts at a low temp. Also DO NOT connect the 3D printed exhaust fan directly to the metal of teh oven, it will melt and ruin your oven. You will need to add some heat resistant insulator between the metal and the 3D print. 
 
 # Which TFT?
 The TFT I am using is a 2.4" SPI TFT using the ILI9341 Driver available via...
