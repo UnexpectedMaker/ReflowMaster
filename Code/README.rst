@@ -14,6 +14,8 @@ HISTORY:
                     - Added extra profile for Ju Feng Medium temp paste
 - 09/07/2019 v1.05  - Fixed some bugs, Thanks Tablatronix!
 - 16/09/2019 v1.06  - Fixed probe offset temp not changing in settings
+- 02/07/2020 v1.07  - Cleaned up some Fan control and tracking code
+                    - Cleaned up some debug messages
 
 Open Source License
 -------------------
