@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v1.0.6 - 19/09/2019.
+  Reflow Master Control - v1.0.6 - 07/09/2019.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -9,10 +9,6 @@
   LINKS:
   Project home: github.com/unexpectedmaker/reflowmaster
   Blog: unexpectedmaker.com
-
-  DISCLAIMER:
-  This software is furnished "as is", without technical support, and with no
-  warranty, express or implied, as to its usefulness for any purpose.
 
   PURPOSE:
   This controller is the software that runs on the Reflow Master toaster oven controller made by Unexpected Maker
@@ -25,8 +21,10 @@
   20/05/2019 v1.04  - Increased max curve to support profiles up to 8mins
                     - Added fan on time after reflow for cooldown settings
                     - Added extra profile for Ju Feng Medium temp paste
-  09/07/2019 v1.05  - Fixed some bugs, Thanks Tablatronix!
+  07/09/2019 v1.05  - Fixed some bugs, Thanks Tablatronix!
   16/09/2019 v1.06  - Fixed probe offset temp not changing in settings
+  02/07/2020 v1.07  - Cleaned up some Fan control and tracking code
+                    - Cleaned up some debug messages
   ---------------------------------------------------------------------------
 */
 
@@ -98,7 +96,7 @@
 typedef struct {
   boolean valid = false;
   boolean useFan = false;
-  int fanTimeAfterReflow = 0;
+  int fanTimeAfterReflow = 60;
   byte paste = 0;
   float power = 1;
   int lookAhead = 6;
@@ -107,7 +105,7 @@ typedef struct {
   bool startFullBlast = false;
 } Settings;
 
-const String ver = "1.05";
+const String ver = "1.07";
 bool newSettings = false;
 
 long nextTempRead;
@@ -215,10 +213,10 @@ void LoadPaste()
 
   solderPaste[3] = ReflowGraph( "DOC SOLDER", "No Clean Sn63/Pb36/Ag2", 187, baseGraphX3, baseGraphY3, ELEMENTS(baseGraphX3), 210, 260 );
 
-  float baseGraphX4[6] = { 1, 75, 130, 180, 210, 250 }; // time
-  float baseGraphY4[6] = { 45, 150, 175, 210, 150, 50 }; // value
+  float baseGraphX4[6] = { 1, 90, 165, 225, 330, 360 }; // time
+  float baseGraphY4[6] = { 25, 150, 175, 235, 100, 25 }; // value
 
-  solderPaste[4] = ReflowGraph( "JU FENG S", "No Clean 63CR218 Sn64/Bi35/AG1", 183, baseGraphX4, baseGraphY4, ELEMENTS(baseGraphX4), 180, 210 );
+  solderPaste[4] = ReflowGraph( "CHEMTOOLS SAC305 HD", "Sn96.5/Ag3.0/Cu0.5", 225, baseGraphX4, baseGraphY4, ELEMENTS(baseGraphX4), 225, 230 );
   
   //TODO: Think of a better way to initalise these baseGraph arrays to not need unique array creation
 }
@@ -259,9 +257,6 @@ void SetCurrentGraph( int index )
   baseCurve.setPoints(CurrentGraph().reflowGraphX, CurrentGraph().reflowGraphY, CurrentGraph().reflowTangents, CurrentGraph().len);
   baseCurve.setDegree( Hermite );
 
-#ifdef DEBUG
-  Serial.println("A");
-#endif
 
   // Re-interpolate data based on spline
   for ( int ii = 0; ii <= graphRangeMax_X; ii += 1 )
@@ -269,19 +264,11 @@ void SetCurrentGraph( int index )
     solderPaste[ currentGraphIndex ].wantedCurve[ii] = baseCurve.value(ii);
   }
 
-#ifdef DEBUG
-  Serial.println("B");
-#endif
-
   // calculate the biggest graph movement delta
   float lastWanted = -1;
   for ( int i = 0; i < solderPaste[ currentGraphIndex ].offTime; i++ )
   {
     float wantedTemp = solderPaste[ currentGraphIndex ].wantedCurve[ i ];
-
-#ifdef DEBUG
-    Serial.println( String(i) + " = " + String( wantedTemp ));
-#endif
 
     if ( lastWanted > -1 )
     {
@@ -292,10 +279,6 @@ void SetCurrentGraph( int index )
     }
     lastWanted  = wantedTemp;
   }
-
-#ifdef DEBUG
-  Serial.println("C");
-#endif
 }
 
 void setup()
@@ -304,6 +287,9 @@ void setup()
   pinMode( BUZZER, OUTPUT );
   pinMode( RELAY, OUTPUT );
   pinMode( FAN, OUTPUT );
+
+  // Turn of Green Debug LED
+  pinMode( 13, INPUT );
 
   pinMode( BUTTON0, INPUT );
   pinMode( BUTTON1, INPUT );
@@ -342,7 +328,7 @@ void setup()
 #endif
 
   // Start up the TFT and show the boot screen
-  tft.begin(40000000);
+  tft.begin(32000000);
   BootScreen();
   BuzzerStart();
 
@@ -680,7 +666,7 @@ void MatchCalibrationTemp()
 
 void KeepFanOnCheck()
 {
-  // do we keep teh fan on after rflow finishes to help cooldown?
+  // do we keep the fan on after reflow finishes to help cooldown?
   if ( set.useFan && millis() < keepFanOnTime )
     StartFan( true );
   else
@@ -690,13 +676,6 @@ void KeepFanOnCheck()
 void ReadCurrentTempAvg()
 {
   int status = tc.read();
-
-#ifdef DEBUG
-  Serial.print(" avg : ");
-  Serial.print( currentTempAvg );
-  Serial.print(" avg count: ");
-  Serial.println( avgReadCount );
-#endif
 
   float internal = tc.getInternal();
   currentTempAvg += tc.getTemperature() + set.tempOffset;
@@ -709,8 +688,11 @@ void ReadCurrentTemp()
 {
   int status = tc.read();
 #ifdef DEBUG
-  Serial.print(" status: ");
-  Serial.println( status );
+  if (stats != 0 )
+  { 
+    Serial.print("TC Read Error Status: ");
+    Serial.println( status );
+  }
 #endif
   float internal = tc.getInternal();
   currentTemp = tc.getTemperature() + set.tempOffset;
@@ -773,7 +755,6 @@ void MatchTemp()
       // If we are usng the fan, turn it on
       if ( set.useFan )
       {
-        isFanOn = true;
         DrawHeading( "COOLDOWN!", GREEN, BLACK );
         Buzzer( 2000, 2000 );
 
@@ -802,13 +783,10 @@ void MatchTemp()
       Serial.print( "CUTOFF: " );
 #endif
     }
-
-    //    // If we dont keep the fan on after reflow, turn it all off
-    //    if ( keepFanOnTime == 0 )
-    //    {
-    //      StartFan ( false );
-    //      isFanOn = false;
-    //    }
+    else if ( !set.useFan )
+    {
+      StartFan ( false );
+    }
 
     isCuttoff = true;
   }
@@ -853,16 +831,26 @@ void MatchTemp()
 
 void StartFan ( bool start )
 {
+  if ( set.useFan )
+  {
+    bool isOn = digitalRead( FAN );
+    if ( start != isOn )
+    {  
+      
 #ifdef DEBUG
   Serial.print("***** FAN Use? ");
   Serial.print( set.useFan );
   Serial.print( " start? ");
   Serial.println( start );
 #endif
-
-  if ( set.useFan )
+ 
+      digitalWrite ( FAN, ( start ? HIGH : LOW ) );
+    }
+    isFanOn = start;
+  }
+  else
   {
-    digitalWrite ( FAN, ( start ? HIGH : LOW ) );
+    isFanOn = false;
   }
 }
 
@@ -1312,7 +1300,6 @@ void AbortReflow()
 
     state = 10;
     ShowMenu();
-
   }
 }
 
@@ -1347,6 +1334,7 @@ void SetDefaults()
 {
   // Default settings values
   set.valid = true;
+  set.fanTimeAfterReflow = 60;
   set.power = 1;
   set.paste = 0;
   set.useFan = true;
