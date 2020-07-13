@@ -16,6 +16,7 @@ HISTORY:
 - 16/09/2019 v1.06  - Fixed probe offset temp not changing in settings
 - 02/07/2020 v1.07  - Cleaned up some Fan control and tracking code
                     - Cleaned up some debug messages
+- 13/07/2020 v1.08  - Fixed bug in DEBUG mode
 
 Open Source License
 -------------------

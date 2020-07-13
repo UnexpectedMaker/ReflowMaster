@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v1.0.6 - 07/09/2019.
+  Reflow Master Control - v1.0.8 - 13/07/2020.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -25,6 +25,7 @@
   16/09/2019 v1.06  - Fixed probe offset temp not changing in settings
   02/07/2020 v1.07  - Cleaned up some Fan control and tracking code
                     - Cleaned up some debug messages
+  13/07/2020 v1.08  - Fixed bug in DEBUG mode
   ---------------------------------------------------------------------------
 */
 
@@ -45,7 +46,7 @@
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
 // used to show or hide serial debug output
-//#define DEBUG
+#define DEBUG
 
 // TFT SPI pins
 #define TFT_DC 0
@@ -105,7 +106,7 @@ typedef struct {
   bool startFullBlast = false;
 } Settings;
 
-const String ver = "1.07";
+const String ver = "1.08";
 bool newSettings = false;
 
 long nextTempRead;
@@ -688,7 +689,7 @@ void ReadCurrentTemp()
 {
   int status = tc.read();
 #ifdef DEBUG
-  if (stats != 0 )
+  if (status != 0 )
   { 
     Serial.print("TC Read Error Status: ");
     Serial.println( status );
