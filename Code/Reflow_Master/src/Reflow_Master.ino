@@ -1823,7 +1823,26 @@ void button3Press()
    https://www.youtube.com/watch?v=YejRbIKe6e0
 */
 
-void SetupGraph(Adafruit_ILI9341 &d, double x, double y, double gx, double gy, double w, double h, double xlo, double xhi, double xinc, double ylo, double yhi, double yinc, String title, String xlabel, String ylabel, unsigned int gcolor, unsigned int acolor, unsigned int tcolor, unsigned int bcolor )
+void SetupGraph(Adafruit_ILI9341 &d,
+		double x,
+		double y,
+		double gx,
+		double gy,
+		double w,
+		double h,
+		double xlo,
+		double xhi,
+		double xinc,
+		double ylo,
+		double yhi,
+		double yinc,
+		String title,
+		String xlabel,
+		String ylabel,
+		unsigned int gcolor,
+		unsigned int acolor,
+		unsigned int tcolor,
+		unsigned int bcolor )
 {
 	double ydiv, xdiv;
 	double i;
