@@ -43,7 +43,6 @@
 #include <FlashStorage.h> // Library Manager
 
 // used to obtain the size of an array of any type
-#define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
 // used to show or hide serial debug output
 #define DEBUG
@@ -110,8 +109,8 @@ typedef struct
 const String ver = "1.08";
 bool newSettings = false;
 
-long nextTempRead;
-long nextTempAvgRead;
+unsigned long nextTempRead;
+unsigned long nextTempAvgRead;
 int avgReadCount = 0;
 
 unsigned long keepFanOnTime = 0;
@@ -119,9 +118,9 @@ unsigned long keepFanOnTime = 0;
 double timeX = 0;
 double tempOffset = 60;
 
-byte state; // 0 = ready, 1 = warmup, 2 = reflow, 3 = finished, 10 Menu, 11+ settings
-byte state_settings = 0;
-byte settings_pointer = 0;
+uint8_t state; // 0 = ready, 1 = warmup, 2 = reflow, 3 = finished, 10 Menu, 11+ settings
+uint8_t state_settings = 0;
+uint8_t active_selected_settings_index = 0;
 
 // Initialise an array to hold 4 profiles
 // Increase this array if you plan to add more
@@ -427,7 +426,7 @@ void loop()
 			{
 				tft.setTextColor( YELLOW, BLACK );
 				tft.setTextSize(5);
-				int third = tft.width() / 4;
+				// int third = tft.width() / 4;
 				println_Center( tft, "  " + String( round( currentTemp ) ) + "c  ", tft.width() / 2, ( tft.height() / 2 ) + 10 );
 			}
 		}
@@ -700,9 +699,10 @@ void KeepFanOnCheck()
 
 void ReadCurrentTempAvg()
 {
-	int status = tc.read();
+	tc.read();
+	// int status = tc.read();
 
-	float internal = tc.getInternal();
+	tc.getInternal();
 	currentTempAvg += tc.getTemperature() + set.tempOffset;
 	avgReadCount++;
 }
@@ -711,17 +711,18 @@ void ReadCurrentTempAvg()
 // Read the temp probe
 void ReadCurrentTemp()
 {
-	int status = tc.read();
 	#ifdef DEBUG
-
-	if (status != 0 )
-	{
-		Serial.print("TC Read Error Status: ");
-		Serial.println( status );
-	}
-
+		int status = tc.read();
+		if (status != 0 )
+		{
+			Serial.print("TC Read Error Status: ");
+			Serial.println( status );
+		}
+	#else
+		tc.read();
 	#endif
-	float internal = tc.getInternal();
+
+	tc.getInternal();
 	currentTemp = tc.getTemperature() + set.tempOffset;
 }
 
@@ -1070,7 +1071,7 @@ void ShowPaste()
 
 	int y = 50;
 
-	for ( int i = 0; i < ELEMENTS(solderPaste); i++ )
+	for ( uint32_t i = 0; i < ELEMENTS(solderPaste); i++ )
 	{
 		if ( i == set.paste )
 		{
@@ -1134,7 +1135,7 @@ void ShowMenuOptions( bool clearAll )
 		tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
 
-		switch ( settings_pointer )
+		switch ( active_selected_settings_index )
 		{
 
 			case 1:
@@ -1227,7 +1228,7 @@ void UpdateSettingsPointer()
 		tft.setTextColor( BLUE, BLACK );
 		tft.setTextSize(2);
 		tft.fillRect( 0, 20, 20, tft.height() - 20, BLACK );
-		tft.setCursor( 5, ( 45 + ( 19 * settings_pointer ) ) );
+		tft.setCursor( 5, ( 45 + ( 19 * active_selected_settings_index ) ) );
 		tft.println(">");
 
 
@@ -1235,7 +1236,7 @@ void UpdateSettingsPointer()
 		tft.setTextColor( GREEN, BLACK );
 		tft.fillRect( 0, tft.height() - 40, tft.width(), 40, BLACK );
 
-		switch ( settings_pointer )
+		switch ( active_selected_settings_index )
 		{
 			case 0:
 				println_Center( tft, "Select which profile to reflow", tft.width() / 2, tft.height() - 20 );
@@ -1281,7 +1282,7 @@ void UpdateSettingsPointer()
 		tft.setTextColor( BLUE, BLACK );
 		tft.setTextSize(2);
 		tft.fillRect( 0, 20, 20, tft.height() - 20, BLACK );
-		tft.setCursor( 5, ( 50 + ( 20 * ( settings_pointer * 2 ) ) ) );
+		tft.setCursor( 5, ( 50 + ( 20 * ( active_selected_settings_index * 2 ) ) ) );
 		tft.println(">");
 	}
 }
@@ -1399,7 +1400,7 @@ void ResetSettingsToDefault()
 	SetCurrentGraph( set.paste );
 
 	// show settings
-	settings_pointer = 0;
+	active_selected_settings_index = 0;
 	ShowSettings();
 }
 
@@ -1449,8 +1450,8 @@ void ShowOvenCheck()
 	SetRelayFrequency( 0 );
 	StartFan( true );
 
-	int posY = 50;
-	int incY = 20;
+	// int posY = 50;
+	// int incY = 20;
 
 	#ifdef DEBUG
 	Serial.println("Oven Check");
@@ -1631,7 +1632,7 @@ void UpdateSettingsTempOffset( int posY )
    Button press code here
 */
 
-long nextButtonPress = 0;
+unsigned long nextButtonPress = 0;
 
 void button0Press()
 {
@@ -1654,18 +1655,18 @@ void button0Press()
 		}
 		else if ( state == 11 )
 		{
-			if ( settings_pointer == 0 )  // change paste
+			if ( active_selected_settings_index == 0 )  // change paste
 			{
-				settings_pointer = set.paste;
+				active_selected_settings_index = set.paste;
 				ShowPaste();
 			}
-			else if ( settings_pointer == 1 )  // switch fan use
+			else if ( active_selected_settings_index == 1 )  // switch fan use
 			{
 				set.useFan = !set.useFan;
 
 				UpdateSettingsFan( 64 );
 			}
-			else if ( settings_pointer == 2 ) // fan countdown after reflow
+			else if ( active_selected_settings_index == 2 ) // fan countdown after reflow
 			{
 				set.fanTimeAfterReflow += 5;
 
@@ -1676,7 +1677,7 @@ void button0Press()
 
 				UpdateSettingsFanTime( 83 );
 			}
-			else if ( settings_pointer == 3 ) // change lookahead for reflow
+			else if ( active_selected_settings_index == 3 ) // change lookahead for reflow
 			{
 				set.lookAhead += 1;
 
@@ -1687,7 +1688,7 @@ void button0Press()
 
 				UpdateSettingsLookAhead( 102 );
 			}
-			else if ( settings_pointer == 4 ) // change power
+			else if ( active_selected_settings_index == 4 ) // change power
 			{
 				set.power += 0.1;
 
@@ -1698,7 +1699,7 @@ void button0Press()
 
 				UpdateSettingsPower( 121 );
 			}
-			else if ( settings_pointer == 5 ) // change temp probe offset
+			else if ( active_selected_settings_index == 5 ) // change temp probe offset
 			{
 				set.tempOffset += 1;
 
@@ -1709,22 +1710,22 @@ void button0Press()
 
 				UpdateSettingsTempOffset( 140 );
 			}
-			else if ( settings_pointer == 6 ) // change use full power on initial ramp
+			else if ( active_selected_settings_index == 6 ) // change use full power on initial ramp
 			{
 				set.startFullBlast = !set.startFullBlast;
 
 				UpdateSettingsStartFullBlast( 159 );
 			}
-			else if ( settings_pointer == 7 ) // reset defaults
+			else if ( active_selected_settings_index == 7 ) // reset defaults
 			{
 				ShowResetDefaults();
 			}
 		}
 		else if ( state == 12 )
 		{
-			if ( set.paste != settings_pointer )
+			if ( set.paste != active_selected_settings_index )
 			{
-				set.paste = settings_pointer;
+				set.paste = active_selected_settings_index;
 				SetCurrentGraph( set.paste );
 				ShowPaste();
 			}
@@ -1749,7 +1750,7 @@ void button1Press()
 
 		if ( state == 10 )
 		{
-			settings_pointer = 0;
+			active_selected_settings_index = 0;
 			ShowSettings();
 		}
 		else if ( state == 11 ) // leaving settings so save
@@ -1760,7 +1761,7 @@ void button1Press()
 		}
 		else if ( state == 12 || state == 13 )
 		{
-			settings_pointer = 0;
+			active_selected_settings_index = 0;
 			ShowSettings();
 		}
 		else if ( state == 15 ) // cancel oven check
@@ -1779,13 +1780,13 @@ void button2Press()
 
 		if ( state == 11 )
 		{
-			settings_pointer = constrain( settings_pointer - 1, 0, 7 );
+			active_selected_settings_index = constrain( active_selected_settings_index - 1ul, 0ul, 7ul );
 			ShowMenuOptions( false );
 			//UpdateSettingsPointer();
 		}
 		else if ( state == 12 )
 		{
-			settings_pointer = constrain( settings_pointer - 1, 0, ELEMENTS(solderPaste) - 1 );
+			active_selected_settings_index = constrain( active_selected_settings_index - 1ul, 0ul, ELEMENTS(solderPaste) - 1ul );
 			UpdateSettingsPointer();
 		}
 	}
@@ -1805,13 +1806,13 @@ void button3Press()
 		}
 		else if ( state == 11 )
 		{
-			settings_pointer = constrain( settings_pointer + 1, 0, 7 );
+			active_selected_settings_index = constrain( active_selected_settings_index + 1ul, 0ul, 7ul );
 			ShowMenuOptions( false );
 			//UpdateSettingsPointer();
 		}
 		else if ( state == 12 )
 		{
-			settings_pointer = constrain( settings_pointer + 1, 0, ELEMENTS(solderPaste) - 1 );
+			active_selected_settings_index = constrain( active_selected_settings_index + 1ul, 0ul, ELEMENTS(solderPaste) - 1ul );
 			UpdateSettingsPointer();
 		}
 	}
@@ -1844,10 +1845,10 @@ void SetupGraph(Adafruit_ILI9341 &d,
 		unsigned int tcolor,
 		unsigned int bcolor )
 {
-	double ydiv, xdiv;
+	// double ydiv, xdiv;
+	// int rot, newrot;
 	double i;
 	int temp;
-	int rot, newrot;
 
 	ox = (x - xlo) * ( w) / (xhi - xlo) + gx;
 	oy = (y - ylo) * (gy - h - gy) / (yhi - ylo) + gy;
@@ -1956,15 +1957,6 @@ void GraphDefault(Adafruit_ILI9341 &d, double x, double y, double gx, double gy,
 	oy = y;
 }
 
-char* string2char(String command)
-{
-	if (command.length() != 0)
-	{
-		char *p = const_cast<char*>(command.c_str());
-		return p;
-	}
-}
-
 void println_Center( Adafruit_ILI9341 &d, String heading, int centerX, int centerY )
 {
 	int x = 0;
@@ -1972,7 +1964,7 @@ void println_Center( Adafruit_ILI9341 &d, String heading, int centerX, int cente
 	int16_t  x1, y1;
 	uint16_t ww, hh;
 
-	d.getTextBounds( string2char(heading), x, y, &x1, &y1, &ww, &hh );
+	d.getTextBounds( heading.c_str(), x, y, &x1, &y1, &ww, &hh );
 	d.setCursor( centerX - ww / 2 + 2, centerY - hh / 2);
 	d.println( heading );
 }
@@ -1984,7 +1976,7 @@ void println_Right( Adafruit_ILI9341 &d, String heading, int centerX, int center
 	int16_t  x1, y1;
 	uint16_t ww, hh;
 
-	d.getTextBounds( string2char(heading), x, y, &x1, &y1, &ww, &hh );
+	d.getTextBounds( heading.c_str(), x, y, &x1, &y1, &ww, &hh );
 	d.setCursor( centerX + ( 18 - ww ), centerY - hh / 2);
 	d.println( heading );
 }

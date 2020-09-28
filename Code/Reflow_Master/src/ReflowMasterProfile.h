@@ -36,7 +36,7 @@ HISTORY:
 
 #pragma once
 
-#define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
+#define ELEMENTS(x)   (static_cast<size_t>(sizeof(x) / sizeof(x[0])))
 
 class ReflowGraph
 {
@@ -93,7 +93,7 @@ class ReflowGraph
 				}
 			}
 
-			for ( int i = 0; i < ELEMENTS(wantedCurve); i++ )
+			for ( uint32_t i = 0; i < ELEMENTS(wantedCurve); i++ )
 			{
 				wantedCurve[i] = -1;
 			}
