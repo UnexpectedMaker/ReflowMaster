@@ -11,7 +11,7 @@ Project home: github.com/unexpectedmaker/reflowmaster
 Blog: unexpectedmaker.com
 
 DISCLAIMER:
-This software is furnished "as is", without technical support, and with no 
+This software is furnished "as is", without technical support, and with no
 warranty, express or implied, as to its usefulness for any purpose.
 
 PURPOSE:
@@ -33,95 +33,115 @@ HISTORY:
       Fan kick in time if using a fan ( int, seconds )
       Open door message time ( int, seconds )
  */
+
+#pragma once
+
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
- class ReflowGraph
- {
+class ReflowGraph
+{
 
-    public:
-      String n;
-      String t;
-      int tempDeg;
-      float reflowGraphX[10];
-      float reflowGraphY[10];
-      float reflowTangents[10] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-      float wantedCurve[480];
-      int len = -1;
-      int fanTime = -1;
-      int offTime = -1;
-      int completeTime = -1;
+	public:
+		String n;
+		String t;
+		int tempDeg;
+		float reflowGraphX[10];
+		float reflowGraphY[10];
+		float reflowTangents[10] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		float wantedCurve[480];
+		int len = -1;
+		int fanTime = -1;
+		int offTime = -1;
+		int completeTime = -1;
 
-      float maxWantedDelta = 0;
+		float maxWantedDelta = 0;
 
-      ReflowGraph()
-      {
-      }
-      
-      ReflowGraph(String nm, String tp, int temp, float flowX[], float flowY[], int leng, int fanT, int offT )
-      {
-       n = nm;
-       t = tp;
-       tempDeg = temp;
-       offTime = offT;
-       fanTime = fanT;
+		ReflowGraph()
+		{
+		}
 
-       int minLength = min( 10, leng );
+		ReflowGraph(String nm, String tp, int temp, float flowX[], float flowY[], int leng, int fanT, int offT )
+		{
+			n = nm;
+			t = tp;
+			tempDeg = temp;
+			offTime = offT;
+			fanTime = fanT;
 
-       len = minLength;
+			int minLength = min( 10, leng );
 
-       completeTime = flowX[ len -1 ];
+			len = minLength;
 
-       for ( int i = 0; i < minLength; i++ )
-       {
-        reflowGraphX[i] = flowX[i];
-        reflowGraphY[i] = flowY[i];
+			completeTime = flowX[ len - 1 ];
 
-        if ( i == 0 )
-          reflowTangents[i] = 1;
-        else if ( i >= fanT )
-          reflowTangents[i] = 1;
-        else
-          reflowTangents[i] = 0;
-       }
+			for ( int i = 0; i < minLength; i++ )
+			{
+				reflowGraphX[i] = flowX[i];
+				reflowGraphY[i] = flowY[i];
 
-       for ( int i = 0; i < ELEMENTS(wantedCurve); i++ )
-          wantedCurve[i] = -1; 
-     }
-     
-     ~ReflowGraph()
-     {
-     }
+				if ( i == 0 )
+				{
+					reflowTangents[i] = 1;
+				}
+				else if ( i >= fanT )
+				{
+					reflowTangents[i] = 1;
+				}
+				else
+				{
+					reflowTangents[i] = 0;
+				}
+			}
 
-     float MaxValue()
-     {
-      float maxV = -1;
-      for( int i = 0; i < len; i++ )
-          maxV = max( maxV, reflowGraphY[i] );
+			for ( int i = 0; i < ELEMENTS(wantedCurve); i++ )
+			{
+				wantedCurve[i] = -1;
+			}
+		}
 
-      return maxV;
-     }
+		~ReflowGraph()
+		{
+		}
 
-     float MinValue()
-     {
-      float minV = 1000;
-      for( int i = 0; i < len; i++ )
-      {
-        if ( reflowGraphY[i] > 0 )
-          minV = min( minV, reflowGraphY[i] );
-      }
+		float MaxValue()
+		{
+			float maxV = -1;
 
-      return minV;
-     }
+			for ( int i = 0; i < len; i++ )
+			{
+				maxV = max( maxV, reflowGraphY[i] );
+			}
 
-     float MaxTime()
-     {
-      float maxV = -1;
-      for( int i = 0; i < len; i++ )
-          maxV = max( maxV, reflowGraphX[i] );
+			return maxV;
+		}
 
-      return maxV;
-     }
- };
+		float MinValue()
+		{
+			float minV = 1000;
+
+			for ( int i = 0; i < len; i++ )
+			{
+				if ( reflowGraphY[i] > 0 )
+				{
+					minV = min( minV, reflowGraphY[i] );
+				}
+			}
+
+			return minV;
+		}
+
+		float MaxTime()
+		{
+			float maxV = -1;
+
+			for ( int i = 0; i < len; i++ )
+			{
+				maxV = max( maxV, reflowGraphX[i] );
+			}
+
+			return maxV;
+		}
+};
 
 
 /*
