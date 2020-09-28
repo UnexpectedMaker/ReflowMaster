@@ -104,22 +104,46 @@ typedef struct
 	int lookAheadWarm = 1;
 	int tempOffset = 0;
 	bool startFullBlast = false;
+	bool invert_ssr = false;
+	bool invert_fan = false;
 } Settings;
 
-const String ver = "1.08";
+const String ver = "1.09";
 bool newSettings = false;
 
 unsigned long nextTempRead;
 unsigned long nextTempAvgRead;
 int avgReadCount = 0;
 
+typedef enum class system_state_t: uint8_t {
+		BOOT                    =  0,   // state ==   0 ) // BOOT
+		WARMUP                  =  1,   // state ==   1 ) // WARMUP - We sit here until the probe reaches the starting temp for the profile
+		REFLOW                  =  2,   // state ==   1 || state ==  2 || state ==  16 ) // warmup, reflow, calibration
+		FINISHED                =  3,   // state ==   3 ) // FINISHED
+		MENU                    = 10,   // state ==  10 ) // MENU
+		MENU_EXIT               = 11,   // state ==  11 ) // leaving settings so save
+		MENU_PASTE_OPTIONS      = 12,   // state ==  12 || state ==   13 )
+		MENU_RESET_DEFAULTS     = 13,   // state ==  13 ) // restore settings to default
+		MENU_OVEN_CHECK         = 15,   // state ==  15 ) // cancel oven check
+		MENU_OVEN_CHECK_RUNNING = 16,    // state ==  16 ) // calibration - not currently used
+		ABORT_REFLOW            = 99
+} system_state;
+
+
+
+typedef enum class calibration_state_t: uint8_t {
+		WARMUP     =  0,
+		COOL_DOWN  =  1,
+		FINISHED   =  2,
+		RESULTS    =  3
+} calibration_state;
+
 unsigned long keepFanOnTime = 0;
 
 double timeX = 0;
 double tempOffset = 60;
 
-uint8_t state; // 0 = ready, 1 = warmup, 2 = reflow, 3 = finished, 10 Menu, 11+ settings
-uint8_t state_settings = 0;
+system_state state; // 0 = ready, 1 = warmup, 2 = reflow, 3 = finished, 10 Menu, 11+ settings
 uint8_t active_selected_settings_index = 0;
 
 // Initialise an array to hold 4 profiles
@@ -129,7 +153,7 @@ ReflowGraph solderPaste[5];
 int currentGraphIndex = 0;
 
 // Calibration data - currently diabled in this version
-int calibrationState = 0;
+calibration_state calibrationState = calibration_state::WARMUP;
 long calibrationSeconds = 0;
 long calibrationStatsUp = 0;
 long calibrationStatsDown = 300;
@@ -302,7 +326,7 @@ void setup()
 	pinMode( BUTTON3, INPUT );
 
 	// Turn off the SSR - duty cycle of 0
-	SetRelayFrequency( 0 );
+	SetRelayDutyCycle( 0 );
 
 	#ifdef DEBUG
 	Serial.begin(115200);
@@ -329,7 +353,7 @@ void setup()
 	button3.attachClick(button3Press);
 
 	#ifdef DEBUG
-	Serial.println("TFT Begin...");
+		Serial.println("TFT Begin...");
 	#endif
 
 	// Start up the TFT and show the boot screen
@@ -341,7 +365,7 @@ void setup()
 
 	// Start up the MAX31855
 	#ifdef DEBUG
-	Serial.println("Thermocouple Begin...");
+		Serial.println("Thermocouple Begin...");
 	#endif
 	tc.begin();
 
@@ -369,11 +393,11 @@ void loop()
 	button3.tick();
 
 	// Current activity state machine
-	if ( state == 0 ) // BOOT
+	if ( state == system_state::BOOT ) // BOOT
 	{
 		return;
 	}
-	else if ( state == 1 ) // WARMUP - We sit here until the probe reaches the starting temp for the profile
+	else if ( state == system_state::WARMUP) // WARMUP - We sit here until the probe reaches the starting temp for the profile
 	{
 		if ( nextTempRead < millis() ) // we only read the probe every second
 		{
@@ -402,18 +426,18 @@ void loop()
 
 		return;
 	}
-	else if ( state == 3 ) // FINISHED
+	else if ( state == system_state::FINISHED ) // FINISHED
 	{
 		// do we keep the fan on after reflow finishes to help cooldown?
 		KeepFanOnCheck();
 		return;
 	}
-	else if ( state == 11 || state == 12 || state == 13 ) // SETTINGS
+	else if ( state == system_state::MENU_EXIT || state == system_state::MENU_PASTE_OPTIONS || state == system_state::MENU_RESET_DEFAULTS ) // SETTINGS
 	{
 		// Currently not used
 		return;
 	}
-	else if ( state == 10 ) // MENU
+	else if ( state == system_state::MENU ) // MENU
 	{
 		if ( nextTempRead < millis() )
 		{
@@ -435,12 +459,12 @@ void loop()
 		KeepFanOnCheck();
 		return;
 	}
-	else if ( state == 15 )
+	else if ( state == system_state::MENU_OVEN_CHECK )
 	{
 		// Currently not used
 		return;
 	}
-	else if ( state == 16 ) // calibration - not currently used
+	else if ( state == system_state::MENU_OVEN_CHECK_RUNNING ) // calibration - not currently used
 	{
 		if ( nextTempRead < millis() )
 		{
@@ -450,12 +474,12 @@ void loop()
 
 			MatchCalibrationTemp();
 
-			if ( calibrationState < 2 )
+			if ( calibrationState == calibration_state::WARMUP || calibrationState == calibration_state::COOL_DOWN )
 			{
 				tft.setTextColor( CYAN, BLACK );
 				tft.setTextSize(2);
 
-				if ( calibrationState == 0 )
+				if ( calibrationState == calibration_state::WARMUP )
 				{
 					if ( currentTemp < GetGraphValue(0) )
 					{
@@ -468,7 +492,7 @@ void loop()
 
 					println_Center( tft, "TARGET " + String( GetGraphValue(1) ) + "c in " + String( GetGraphTime(1) ) + "s", tft.width() / 2, ( tft.height() - 18 ) );
 				}
-				else if ( calibrationState == 1 )
+				else if ( calibrationState == calibration_state::COOL_DOWN )
 				{
 					println_Center( tft, "COOL DOWN LEVEL", tft.width() / 2, ( tft.height() / 2 ) - 15 );
 					tft.fillRect( 0, tft.height() - 30, tft.width(), 30, BLACK );
@@ -479,7 +503,7 @@ void loop()
 				if (currentTemp >= GetGraphValue(0) )
 				{
 					// adjust the timer colour based on good or bad values
-					if ( calibrationState == 0 )
+					if ( calibrationState == calibration_state::WARMUP )
 					{
 						if ( calibrationSeconds <= GetGraphTime(1) )
 						{
@@ -505,9 +529,9 @@ void loop()
 
 
 			}
-			else if ( calibrationState == 2 )
+			else if ( calibrationState == calibration_state::FINISHED )
 			{
-				calibrationState = 3;
+				calibrationState = calibration_state::RESULTS;
 
 				tft.setTextColor( GREEN, BLACK );
 				tft.setTextSize(2);
@@ -608,17 +632,23 @@ void loop()
 }
 
 // This is where the SSR is controlled via PWM
-void SetRelayFrequency( int duty )
+void SetRelayDutyCycle( int duty )
 {
 	// calculate the wanted duty based on settings power override
 	currentDuty = ((float)duty * set.power );
 
+	auto output_duty = constrain( round( currentDuty ), 0, 256);
+	if (set.invert_ssr)
+	{
+		output_duty = 256 - output_duty;
+	}
+
 	// Write the clamped duty cycle to the RELAY GPIO
-	analogWrite( RELAY, constrain( round( currentDuty ), 0, 255) );
+	analogWrite( RELAY, output_duty);
 
 	#ifdef DEBUG
-	Serial.print("RELAY Duty Cycle: ");
-	Serial.println( String( ( currentDuty / 256.0 ) * 100) + "%" + " Using Power: " + String( round( set.power * 100 )) + "%" );
+		Serial.print("RELAY Duty Cycle: ");
+		Serial.println( String( ( currentDuty / 256.0 ) * 100) + "%" + " Using Power: " + String( round( set.power * 100 )) + "%" );
 	#endif
 }
 
@@ -629,10 +659,10 @@ void SetRelayFrequency( int duty )
 
 void MatchCalibrationTemp()
 {
-	if ( calibrationState == 0 ) // temp speed
+	if ( calibrationState == calibration_state::WARMUP ) // temp speed
 	{
 		// Set SSR to full duty cycle - 100%
-		SetRelayFrequency( 255 );
+		SetRelayDutyCycle( 255 );
 
 		// Only count seconds from when we reach the profile starting temp
 		if ( currentTemp >= GetGraphValue(0) )
@@ -650,16 +680,16 @@ void MatchCalibrationTemp()
 			calibrationUpMatch = ( calibrationSeconds <= GetGraphTime(1) );
 
 
-			calibrationState = 1; // cooldown
-			SetRelayFrequency( 0 );
+			calibrationState = calibration_state::COOL_DOWN; // cooldown
+			SetRelayDutyCycle( 0 );
 			StartFan( false );
 			Buzzer( 2000, 50 );
 		}
 	}
-	else if ( calibrationState == 1 )
+	else if ( calibrationState == calibration_state::COOL_DOWN )
 	{
 		calibrationSeconds --;
-		SetRelayFrequency( 0 );
+		SetRelayDutyCycle( 0 );
 
 		if ( calibrationSeconds <= 0 )
 		{
@@ -673,7 +703,7 @@ void MatchCalibrationTemp()
 			// Did we drop in temp > 33% of our target temp? If not, recomment using a fan!
 			calibrationDownMatch = ( calibrationDropVal > 0.33 );
 
-			calibrationState = 2; // finished
+			calibrationState = calibration_state::FINISHED; // finished
 			StartFan( true );
 		}
 	}
@@ -853,7 +883,8 @@ void MatchTemp()
 	duty = base + ( 172 * perc );
 	duty = constrain( duty, 0, 256 );
 
-	// override for full blast at start only if the current Temp is less than the wanted Temp, and it's in the ram before pre-soak starts.
+	// override for full blast at start only if the current Temp is less than the wanted
+	// Temp, and it's in the ramp before pre-soak starts.
 	if ( set.startFullBlast && timeX < CurrentGraph().reflowGraphX[1] && currentTemp < wantedTemp )
 	{
 		duty = 256;
@@ -861,7 +892,7 @@ void MatchTemp()
 
 	currentPlotColor = GREEN;
 
-	SetRelayFrequency( duty );
+	SetRelayDutyCycle( duty );
 }
 
 void StartFan ( bool start )
@@ -879,8 +910,13 @@ void StartFan ( bool start )
 			Serial.print( " start? ");
 			Serial.println( start );
 			#endif
+			bool fan_state = start ? HIGH : LOW;
+			if (set.invert_fan)
+			{
+				fan_state = !fan_state;
+			}
 
-			digitalWrite ( FAN, ( start ? HIGH : LOW ) );
+			digitalWrite ( FAN, fan_state );
 		}
 
 		isFanOn = start;
@@ -953,13 +989,13 @@ void BootScreen()
 	tft.setTextSize(1);
 	println_Center( tft, "Code v" + ver, tft.width() / 2, tft.height() - 20 );
 
-	state = 10;
+	state = system_state::MENU;
 }
 
 void ShowMenu()
 {
-	state = 10;
-	SetRelayFrequency( 0 );
+	state = system_state::MENU;
+	SetRelayDutyCycle( 0 );
 
 	set = flash_store.read();
 
@@ -991,8 +1027,8 @@ void ShowMenu()
 
 void ShowSettings()
 {
-	state = 11;
-	SetRelayFrequency( 0 );
+	state = system_state::MENU_EXIT;
+	SetRelayDutyCycle( 0 );
 
 	newSettings = false;
 
@@ -1057,8 +1093,8 @@ void ShowSettings()
 
 void ShowPaste()
 {
-	state = 12;
-	SetRelayFrequency( 0 );
+	state = system_state::MENU_PASTE_OPTIONS;
+	SetRelayDutyCycle( 0 );
 
 	tft.fillScreen(BLACK);
 
@@ -1115,7 +1151,7 @@ void ShowMenuOptions( bool clearAll )
 		}
 	}
 
-	if ( state == 10 )
+	if ( state == system_state::MENU )
 	{
 		// button 0
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
@@ -1129,7 +1165,7 @@ void ShowMenuOptions( bool clearAll )
 		tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
 		println_Right( tft, "OVEN CHECK", tft.width() - 27, buttonPosY[3] + 8 );
 	}
-	else if ( state == 11 )
+	else if ( state == system_state::MENU_EXIT )
 	{
 		// button 0
 		tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
@@ -1165,7 +1201,7 @@ void ShowMenuOptions( bool clearAll )
 
 		UpdateSettingsPointer();
 	}
-	else if ( state == 12 )
+	else if ( state == system_state::MENU_PASTE_OPTIONS )
 	{
 		// button 0
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
@@ -1185,7 +1221,7 @@ void ShowMenuOptions( bool clearAll )
 
 		UpdateSettingsPointer();
 	}
-	else if ( state == 13 ) // restore settings to default
+	else if ( state == system_state::MENU_RESET_DEFAULTS ) // restore settings to default
 	{
 		// button 0
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
@@ -1195,13 +1231,13 @@ void ShowMenuOptions( bool clearAll )
 		tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
 		println_Right( tft, "NO", tft.width() - 27, buttonPosY[1] + 8 );
 	}
-	else if ( state == 1 || state == 2 || state == 16 ) // warmup, reflow, calibration
+	else if ( state == system_state::WARMUP || state == system_state::REFLOW || state == system_state::MENU_OVEN_CHECK_RUNNING ) // warmup, reflow, calibration
 	{
 		// button 0
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
 		println_Right( tft, "ABORT", tft.width() - 27, buttonPosY[0] + 8 );
 	}
-	else if ( state == 3 ) // Finished
+	else if ( state == system_state::FINISHED ) // Finished
 	{
 		tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
 
@@ -1209,7 +1245,7 @@ void ShowMenuOptions( bool clearAll )
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
 		println_Right( tft, "MENU", tft.width() - 27, buttonPosY[0] + 8 );
 	}
-	else if ( state == 15 )
+	else if ( state == system_state::MENU_OVEN_CHECK )
 	{
 		// button 0
 		tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
@@ -1223,7 +1259,7 @@ void ShowMenuOptions( bool clearAll )
 
 void UpdateSettingsPointer()
 {
-	if ( state == 11 )
+	if ( state == system_state::MENU_EXIT )
 	{
 		tft.setTextColor( BLUE, BLACK );
 		tft.setTextSize(2);
@@ -1277,7 +1313,7 @@ void UpdateSettingsPointer()
 
 		tft.setTextSize(2);
 	}
-	else if ( state == 12 )
+	else if ( state == system_state::MENU_PASTE_OPTIONS )
 	{
 		tft.setTextColor( BLUE, BLACK );
 		tft.setTextSize(2);
@@ -1293,7 +1329,7 @@ void StartWarmup()
 {
 	tft.fillScreen(BLACK);
 
-	state = 1;
+	state = system_state::WARMUP;
 	timeX = 0;
 	ShowMenuOptions( true );
 	lastWantedTemp = -1;
@@ -1313,7 +1349,7 @@ void StartReflow()
 {
 	tft.fillScreen(BLACK);
 
-	state = 2;
+	state = system_state::REFLOW;
 	ShowMenuOptions( true );
 
 	timeX = 0;
@@ -1325,11 +1361,11 @@ void StartReflow()
 
 void AbortReflow()
 {
-	if ( state == 1 || state == 2 || state == 16 ) // if we are in warmup or reflow states
+	if ( state == system_state::WARMUP|| state == system_state::REFLOW || state == system_state::MENU_OVEN_CHECK_RUNNING ) // if we are in warmup or reflow states
 	{
-		state = 99;
+		state = system_state::ABORT_REFLOW;
 
-		SetRelayFrequency(0); // Turn the SSR off immediately
+		SetRelayDutyCycle(0); // Turn the SSR off immediately
 
 		DrawHeading( "ABORT", RED, BLACK );
 
@@ -1344,17 +1380,16 @@ void AbortReflow()
 
 		delay(1000);
 
-		state = 10;
 		ShowMenu();
 	}
 }
 
 void EndReflow()
 {
-	if ( state == 2 )
+	if ( state == system_state::REFLOW )
 	{
-		SetRelayFrequency( 0 );
-		state = 3;
+		SetRelayDutyCycle( 0 );
+		state = system_state::FINISHED;
 
 		Buzzer( 2000, 500 );
 
@@ -1414,16 +1449,16 @@ void StartOvenCheck()
 	#ifdef DEBUG
 	Serial.println("Oven Check Start Temp " + String( currentTemp ) );
 	#endif
-	state = 16;
+	state = system_state::MENU_OVEN_CHECK_RUNNING;
+	calibrationState = calibration_state::WARMUP;
 	calibrationSeconds = 0;
-	calibrationState = 0;
 	calibrationStatsUp = 0;
 	calibrationStatsDown = 300;
 	calibrationUpMatch = false;
 	calibrationDownMatch = false;
 	calibrationDropVal = 0;
 	calibrationRiseVal = 0;
-	SetRelayFrequency( 0 );
+	SetRelayDutyCycle( 0 );
 	StartFan( false );
 
 	#ifdef DEBUG
@@ -1446,8 +1481,8 @@ void StartOvenCheck()
 
 void ShowOvenCheck()
 {
-	state = 15;
-	SetRelayFrequency( 0 );
+	state = system_state::MENU_OVEN_CHECK;
+	SetRelayDutyCycle( 0 );
 	StartFan( true );
 
 	// int posY = 50;
@@ -1509,7 +1544,7 @@ void ShowResetDefaults()
 	tft.setCursor( 20, 120 );
 	tft.println( "ARE YOU SURE?" );
 
-	state = 13;
+	state = system_state::MENU_RESET_DEFAULTS;
 	ShowMenuOptions( false );
 
 	tft.setTextSize(1);
@@ -1641,19 +1676,19 @@ void button0Press()
 		nextButtonPress = millis() + 20;
 		Buzzer( 2000, 50 );
 
-		if ( state == 10 )
+		if ( state == system_state::MENU )
 		{
 			StartWarmup();
 		}
-		else if ( state == 1 || state == 2 || state == 16 )
+		else if ( state == system_state::WARMUP|| state == system_state::REFLOW || state == system_state::MENU_OVEN_CHECK_RUNNING )
 		{
 			AbortReflow();
 		}
-		else if ( state == 3 )
+		else if ( state == system_state::FINISHED )
 		{
 			ShowMenu();
 		}
-		else if ( state == 11 )
+		else if ( state == system_state::MENU_EXIT )
 		{
 			if ( active_selected_settings_index == 0 )  // change paste
 			{
@@ -1721,7 +1756,7 @@ void button0Press()
 				ShowResetDefaults();
 			}
 		}
-		else if ( state == 12 )
+		else if ( state == system_state::MENU_PASTE_OPTIONS )
 		{
 			if ( set.paste != active_selected_settings_index )
 			{
@@ -1730,11 +1765,11 @@ void button0Press()
 				ShowPaste();
 			}
 		}
-		else if ( state == 13 )
+		else if ( state == system_state::MENU_RESET_DEFAULTS )
 		{
 			ResetSettingsToDefault();
 		}
-		else if ( state == 15 )
+		else if ( state == system_state::MENU_OVEN_CHECK )
 		{
 			StartOvenCheck();
 		}
@@ -1748,23 +1783,23 @@ void button1Press()
 		nextButtonPress = millis() + 20;
 		Buzzer( 2000, 50 );
 
-		if ( state == 10 )
+		if ( state == system_state::MENU )
 		{
 			active_selected_settings_index = 0;
 			ShowSettings();
 		}
-		else if ( state == 11 ) // leaving settings so save
+		else if ( state == system_state::MENU_EXIT ) // leaving settings so save
 		{
 			// save data in flash
 			flash_store.write(set);
 			ShowMenu();
 		}
-		else if ( state == 12 || state == 13 )
+		else if ( state == system_state::MENU_PASTE_OPTIONS || state == system_state::MENU_RESET_DEFAULTS )
 		{
 			active_selected_settings_index = 0;
 			ShowSettings();
 		}
-		else if ( state == 15 ) // cancel oven check
+		else if ( state == system_state::MENU_OVEN_CHECK ) // cancel oven check
 		{
 			ShowMenu();
 		}
@@ -1778,13 +1813,13 @@ void button2Press()
 		nextButtonPress = millis() + 20;
 		Buzzer( 2000, 50 );
 
-		if ( state == 11 )
+		if ( state == system_state::MENU_EXIT )
 		{
 			active_selected_settings_index = constrain( active_selected_settings_index - 1ul, 0ul, 7ul );
 			ShowMenuOptions( false );
 			//UpdateSettingsPointer();
 		}
-		else if ( state == 12 )
+		else if ( state == system_state::MENU_PASTE_OPTIONS )
 		{
 			active_selected_settings_index = constrain( active_selected_settings_index - 1ul, 0ul, ELEMENTS(solderPaste) - 1ul );
 			UpdateSettingsPointer();
@@ -1800,17 +1835,17 @@ void button3Press()
 		nextButtonPress = millis() + 20;
 		Buzzer( 2000, 50 );
 
-		if ( state == 10 )
+		if ( state == system_state::MENU )
 		{
 			ShowOvenCheck();
 		}
-		else if ( state == 11 )
+		else if ( state == system_state::MENU_EXIT )
 		{
 			active_selected_settings_index = constrain( active_selected_settings_index + 1ul, 0ul, 7ul );
 			ShowMenuOptions( false );
 			//UpdateSettingsPointer();
 		}
-		else if ( state == 12 )
+		else if ( state == system_state::MENU_PASTE_OPTIONS )
 		{
 			active_selected_settings_index = constrain( active_selected_settings_index + 1ul, 0ul, ELEMENTS(solderPaste) - 1ul );
 			UpdateSettingsPointer();
