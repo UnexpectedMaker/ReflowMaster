@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v2.0.0 - 15/12/2020.
+  Reflow Master Control - v2.01 - 20/12/2020.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -32,6 +32,11 @@
   19/12/2020 v2.00  - Added baking mode
                     - Lots of code cleanup and simplification
                     - Included the more obscure libraries inside the sketch
+  20/12/2020 v2.01  - Forgot to hookup minBakeTemp, minBakeTime, maxBakeTemp, maxBakeTemp variables to buttons
+                    - Increased max bake time to 3 hours
+                    - Added long press for Bake Time & Temp to quickly change values, clamped at max, so it won't loop
+                    - Oven was not turned off correctly after the bake ended
+
   ---------------------------------------------------------------------------
 */
 
@@ -40,13 +45,13 @@
 */
 
 #include <SPI.h>
-#include "spline.h" // Already included in this sketch
+#include "spline.h"
 #include "Adafruit_GFX.h" // Add from Library Manager
 #include "Adafruit_ILI9341.h" // Add from Library Manager
-#include "MAX31855.h" // Already included in this sketch
+#include "MAX31855.h"
 #include "OneButton.h" // Add from Library Manager
-#include "ReflowMasterProfile.h" // Already included in this sketch
-#include "FlashStorage.h" // Already included in this sketch
+#include "ReflowMasterProfile.h"
+#include "FlashStorage.h"
 
 // used to obtain the size of an array of any type
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
@@ -134,7 +139,7 @@ enum states {
   ABORT = 99
 } state;
 
-const String ver = "2.0";
+const String ver = "2.01";
 bool newSettings = false;
 
 long nextTempRead;
@@ -151,7 +156,7 @@ long currentBakeTime = 0; // Used to countdown the bake time
 byte currentBakeTimeCounter = 0;
 int lastTempDirection = 0;
 long minBakeTime = 600; // 10 mins in seconds
-long maxBakeTime = 7200; // 2 hours in seconds
+long maxBakeTime = 10800; // 3 hours in seconds
 float minBakeTemp = 45; // 10 mins in seconds
 float maxBakeTemp = 100; // 2 hours in seconds
 
@@ -360,6 +365,12 @@ void setup()
   button1.attachClick(button1Press);
   button2.attachClick(button2Press);
   button3.attachClick(button3Press);
+
+  // New long press buttons for changing bake time and temp values
+  button2.attachLongPressStart(button2LongPressStart);
+  button2.attachDuringLongPress(button2LongPress);
+  button3.attachLongPressStart(button3LongPressStart);
+  button3.attachDuringLongPress(button3LongPress);
 
   debug_println("TFT Begin...");
 
@@ -1072,13 +1083,15 @@ void BootScreen()
   tft.setRotation(1);
   tft.fillScreen(BLACK);
 
+  tft.drawBitmap( 115, ( tft.height() / 2 ) +20 , UM_Logo, 90, 49, WHITE);
+
   tft.setTextColor( GREEN, BLACK );
   tft.setTextSize(3);
-  println_Center( tft, "REFLOW MASTER", tft.width() / 2, ( tft.height() / 2 ) - 8 );
+  println_Center( tft, "REFLOW MASTER", tft.width() / 2, ( tft.height() / 2 ) - 38 );
 
   tft.setTextSize(2);
   tft.setTextColor( WHITE, BLACK );
-  println_Center( tft, "unexpectedmaker.com", tft.width() / 2, ( tft.height() / 2 ) + 20 );
+  println_Center( tft, "unexpectedmaker.com", tft.width() / 2, ( tft.height() / 2 ) - 10 );
   tft.setTextSize(1);
   println_Center( tft, "Code v" + ver, tft.width() / 2, tft.height() - 20 );
 
@@ -1440,7 +1453,7 @@ void UpdateBake()
   tft.setTextColor( YELLOW, BLACK );
   tft.setTextSize(5);
   tft.setCursor( 20, 82 );
-  tft.println(String(round(currentTemp*10)/10) + "/" + String(round(set.bakeTemp)) + "c");
+  tft.println(String(round(currentTemp * 10) / 10) + "/" + String(round(set.bakeTemp)) + "c");
   tft.setCursor( 20, 157 );
   tft.println(String(round(currentBakeTime / 60 + 0.5)) + "/" + String(set.bakeTime / 60) + "min ");
 
@@ -1459,10 +1472,10 @@ void StartBake()
 
   tft.fillScreen(BLACK);
 
-//  tft.setTextColor( BLUE, BLACK );
-//  tft.setTextSize(3);
-//  tft.setCursor( 20, 20 );
-//  tft.println( "BAKING..." );
+  //  tft.setTextColor( BLUE, BLACK );
+  //  tft.setTextSize(3);
+  //  tft.setCursor( 20, 20 );
+  //  tft.println( "BAKING..." );
 
   tft.setTextColor( WHITE, BLACK );
   tft.setCursor( 20, 60 );
@@ -1481,6 +1494,8 @@ void StartBake()
 void BakeDone()
 {
   state = BAKE_DONE;
+  
+  SetRelayFrequency(0); // Turn the SSR off immediately
 
   Buzzer( 2000, 500 );
 
@@ -2013,7 +2028,7 @@ void button0Press()
         set.bakeTempGap += 1;
         if ( set.bakeTempGap > 5 )
           set.bakeTempGap = 0;
-          
+
         UpdateSettingsBakeTempGap( 178 );
       }
       else if ( settings_pointer == 8 ) // reset defaults
@@ -2090,8 +2105,8 @@ void button2Press()
     else if ( state == BAKE_MENU )
     {
       set.bakeTemp += 1;
-      if ( set.bakeTemp > 100 )
-        set.bakeTemp = 45;
+      if ( set.bakeTemp > maxBakeTemp )
+        set.bakeTemp = minBakeTemp;
 
       UpdateBakeMenu();
     }
@@ -2128,8 +2143,8 @@ void button3Press()
     else if ( state == BAKE_MENU )
     {
       set.bakeTime += 300;
-      if ( set.bakeTime > 7200 )
-        set.bakeTime = 600;
+      if ( set.bakeTime > maxBakeTime )
+        set.bakeTime = minBakeTime;
 
       UpdateBakeMenu();
     }
@@ -2143,6 +2158,64 @@ void button3Press()
     {
       settings_pointer = constrain( settings_pointer + 1, 0, ELEMENTS(solderPaste) - 1 );
       UpdateSettingsPointer();
+    }
+  }
+}
+
+
+void button2LongPressStart()
+{
+  if ( nextButtonPress < millis() )
+  {
+    nextButtonPress = millis() + 10;
+    Buzzer( 2000, 10 );
+    delay(50);
+    Buzzer( 2000, 10 );
+  }
+}
+
+void button2LongPress()
+{
+  if ( state == BAKE_MENU )
+  {
+    if ( nextButtonPress < millis() )
+    {
+      nextButtonPress = millis() +10;
+
+      set.bakeTemp += 1;
+      if ( set.bakeTemp > maxBakeTemp )
+        set.bakeTemp = maxBakeTemp;
+
+      UpdateBakeMenu();
+    }
+  }
+}
+
+
+void button3LongPressStart()
+{
+  if ( nextButtonPress < millis() )
+  {
+    nextButtonPress = millis() + 20;
+    Buzzer( 2000, 10 );
+    delay(50);
+    Buzzer( 2000, 10 );
+  }
+}
+
+void button3LongPress()
+{
+  if ( state == BAKE_MENU )
+  {
+    if ( nextButtonPress < millis() )
+    {
+      nextButtonPress = millis() + 20;
+
+      set.bakeTime += 300;
+      if ( set.bakeTime > maxBakeTime )
+        set.bakeTime = maxBakeTime;
+
+      UpdateBakeMenu();
     }
   }
 }
