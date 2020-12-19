@@ -40,7 +40,7 @@ https://rover.ebay.com/rover/1/705-53470-19255-0/1?icep_id=114&ipn=icep&toolid=2
 If you build your own Reflow Master, you will need to use a SAMD21G18 that already has an Arduino bootloader on it *before* it is put on the board. If you need to add a bootloader, you'll need an ATMEL ICE and an adapter for the chip. The cheapest adapter you can get is my SAMD21G Mangler available here...
 https://www.tindie.com/products/13379/
 
-# Hacking the code - Adding profiles
+# Updating firmware & Adding profiles - for Version 2.0.0
 You can flash your Reflow Master with the Arduino IDE using the code provided above.
 
 If you wish to add or change any of the reflow profiles, you need to do so in the code and re-flash the changes to your Reflow Master.
@@ -52,18 +52,15 @@ The Reflow Master board works like an "Adafruit Feather M0" - so you'll need to 
 You can use the instructions here to install everything you need to get up and running in the Arduino IDE:
 https://learn.adafruit.com/adafruit-feather-m0-basic-proto/setup
 
-You will also need the following libraries installed
-- Spline library http://github.com/kerinin/arduino-splines
-- MAX31855 library by Rob Tillaart https://github.com/RobTillaart/Arduino/tree/master/libraries/MAX31855
-
-Plus the following libraries from Library Manager
+You will also need the following libraries from Library Manager
 - One Button
 - Adafruit_GFX
 - Adafruit_ILI9341
-- FlashStorage
+
+Once you have everything you need, you can download the code from this repo and put it into the Arduino folder where your sketches are stored, load the sketch, select Adafruit Feather M0 from the boards list, plug in your RM and turn it on, and select the correct port from the ports list and flash.
    
 The easiest way to put a new profile into the code is to change one of the existing profiles, by altering the values in it's class initialiser. Information of what each value is is available in the ReflowMasterProfile.h file:
-https://github.com/UnexpectedMaker/ReflowMaster/blob/master/Code/Reflow_Master/ReflowMasterProfile.h
+https://github.com/UnexpectedMaker/ReflowMaster/blob/master/Code/Reflow_Master_v2/ReflowMasterProfile.h
    
 Enjoy!
 
@@ -73,7 +70,7 @@ I love designing, making and releasing our projects as open source. I do it beca
 
 That said, a lot of time, effort and finances have gone into designing and releasing these files, so please consider supporting me by buy some of my TiinyPICO products:
 
-https://tinypico.com/shop
+https://unexpectedmaker.com/shop
 
 Or by buying one of our products on tindie:
 

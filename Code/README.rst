@@ -1,9 +1,12 @@
 Reflow Master Arduino Code
 ==========================
 
-In this repository you'll find the Reflow Master code for Arduino
+In this repository you'll find the Reflow Master code for Arduino in 2 different versions:
 
-HISTORY:
+Reflow Master V1 and Reflow Master V2
+
+Reflow Master V1 HISTORY:
+-------------------------
 
 - 01/08/2018 v1.0   - Initial release.
 - 13/08/2018 v1.01  - Settings UI button now change to show SELECT or CHANGE depending on what is selected
@@ -18,6 +21,11 @@ HISTORY:
                     - Cleaned up some debug messages
 - 13/07/2020 v1.08  - Fixed bug in DEBUG mode
 
+Reflow Master V2 HISTORY:
+-------------------------
+
+- 19/12/2020 v2.0.0 - Initial release.
+
 Open Source License
 -------------------
 
@@ -26,17 +34,16 @@ These files are released as open source under the MIT license. Please review the
 Support Unexpected Maker
 ------------------------
 
-We love designing, making and releasing our projects as open source. We do it because we believe it’s important to share knowledge and give back to the community, like many have done before us. It helps us all learn and grow.
+I love designing, making and releasing our projects as open source. I do it because I believe it’s important to share knowledge and give back to the community, like many have done before me. It helps us all learn and grow.
 
-That said, a lot of time, effort and finances have gone into designing and releasing these files, so please consider supporting us and following us on social media
+That said, a lot of time, effort and finances have gone into designing and releasing these files, so please consider supporting me and following me on social media
 
-Grab a TinyPICO:
-
-https://www.crowdsupply.com/unexpected-maker/tinypico
-
-Or by buy one of our products on tindie:
+If you'd like to support me on my journey, please consider buying one of my products on tindie
 
 https://www.tindie.com/stores/seonr/
+
+or at
+https://unexpectedmaker.com/shop
 
 Or become a Patron:
 
