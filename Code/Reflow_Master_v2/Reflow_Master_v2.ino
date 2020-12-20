@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v2.01 - 20/12/2020.
+  Reflow Master Control - v2.02 - 20/12/2020.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -36,6 +36,10 @@
                     - Increased max bake time to 3 hours
                     - Added long press for Bake Time & Temp to quickly change values, clamped at max, so it won't loop
                     - Oven was not turned off correctly after the bake ended
+  20/12/2020 v2.02  - Prevent going into the Bake menu when there is a thermocouple error
+                    - Set FAN to Off by default
+                    - Fixed some incorrect comments 
+                    - Made TC error more visible
 
   ---------------------------------------------------------------------------
 */
@@ -107,7 +111,7 @@
 // Save data struct
 typedef struct {
   boolean valid = false;
-  boolean useFan = true;
+  boolean useFan = false;
   int fanTimeAfterReflow = 60;
   byte paste = 0;
   float power = 1;
@@ -139,9 +143,10 @@ enum states {
   ABORT = 99
 } state;
 
-const String ver = "2.01";
+const String ver = "2.02";
 bool newSettings = false;
 
+// TC variables
 long nextTempRead;
 long nextTempAvgRead;
 int avgReadCount = 0;
@@ -157,9 +162,10 @@ byte currentBakeTimeCounter = 0;
 int lastTempDirection = 0;
 long minBakeTime = 600; // 10 mins in seconds
 long maxBakeTime = 10800; // 3 hours in seconds
-float minBakeTemp = 45; // 10 mins in seconds
-float maxBakeTemp = 100; // 2 hours in seconds
+float minBakeTemp = 45; // 45 Degrees C
+float maxBakeTemp = 100; // 100 Degrees C
 
+// Current index in the settings screen
 byte settings_pointer = 0;
 
 // Initialise an array to hold 5 profiles
@@ -497,7 +503,7 @@ void loop()
           tft.fillRect( 0, tft.height() / 2 - 10, 320, 37, BLACK );
         }
         tcWasError = true;
-        tft.setTextColor( RED, BLACK );
+        tft.setTextColor( WHITE, RED );
         tft.setTextSize(3);
         int third = tft.width() / 4;
         println_Center( tft, " TC ERROR: #" + String( tcError ) + " ", tft.width() / 2, ( tft.height() / 2 ) + 12 );
@@ -1699,7 +1705,7 @@ void SetDefaults()
   set.fanTimeAfterReflow = 60;
   set.power = 1;
   set.paste = 0;
-  set.useFan = true;
+  set.useFan = false;
   set.lookAhead = 7;
   set.lookAheadWarm = 7;
   set.startFullBlast = false;
@@ -2065,7 +2071,11 @@ void button1Press()
 
     if ( state == MENU )
     {
-      ShowBakeMenu( true );
+      // Only allow reflow start if there is no TC error
+      if ( tcError == 0 )
+        ShowBakeMenu( true );
+      else
+        Buzzer( 100, 250 );
     }
     else if ( state == SETTINGS ) // leaving settings so save
     {
