@@ -40,7 +40,7 @@
                     - Set FAN to Off by default
                     - Fixed some incorrect comments 
                     - Made TC error more visible
-
+  21/12/2020 v2.02  - Fixed UI glitch in main menu with TC error display
   ---------------------------------------------------------------------------
 */
 
@@ -187,7 +187,7 @@ float calibrationRiseVal = 0;
 // Runtime reflow variables
 int tcError = 0;
 bool tcWasError = false;
-bool tcWasGood = false;
+bool tcWasGood = true;
 float currentDuty = 0;
 float currentTemp = 0;
 float cachedCurrentTemp = 0;
@@ -500,21 +500,27 @@ void loop()
         if ( tcWasGood )
         {
           tcWasGood = false;
-          tft.fillRect( 0, tft.height() / 2 - 10, 320, 37, BLACK );
+          tft.setTextColor( BLACK, BLACK );
+          tft.setTextSize(6);
+          tft.setCursor( 20,  ( tft.height() / 2 ) - 25 );
+          tft.println( String( round( cachedCurrentTemp ) ) + "c" );
+
+          tft.fillRect( 5, tft.height() / 2 - 20, 180, 31, RED );
         }
         tcWasError = true;
         tft.setTextColor( WHITE, RED );
-        tft.setTextSize(3);
-        int third = tft.width() / 4;
-        println_Center( tft, " TC ERROR: #" + String( tcError ) + " ", tft.width() / 2, ( tft.height() / 2 ) + 12 );
+        tft.setTextSize(3);        
+        tft.setCursor( 10, ( tft.height() / 2 ) - 15 );
+        tft.println( "TC ERR #" + String( tcError ) );
       }
       else if ( currentTemp > 0 )
       {
         // Clear error background if there was one!
         if ( tcWasError )
         {
+          cachedCurrentTemp = 0;
           tcWasError = false;
-          tft.fillRect( 0, tft.height() / 2 - 15, 320, 30, BLACK );
+          tft.fillRect( 0, tft.height() / 2 - 20, 200, 32, BLACK );
         }
         tcWasGood = true;
         DisplayTemp();
