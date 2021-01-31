@@ -66,13 +66,11 @@ Enjoy!
 
 # Support Unexpected Maker
 
-I love designing, making and releasing our projects as open source. I do it because I believe it’s important to share knowledge and give back to the community, like many have done before me. It helps us all learn and grow.
+I love designing, making and releasing my projects as open source. I do it because I believe it’s important to share knowledge and give back to the community, like many have done before me. It helps us all learn and grow.
 
-That said, a lot of time, effort and finances have gone into designing and releasing these files, so please consider supporting me by buy some of my TiinyPICO products:
+That said, a lot of time, effort and finances have gone into designing and releasing these files, so please consider supporting me by buying some of my products:
 
 https://unexpectedmaker.com/shop
-
-Or by buying one of our products on tindie:
 
 https://www.tindie.com/stores/seonr/
 
@@ -80,9 +78,14 @@ Or by becoming a Patron:
 
 https://www.patreon.com/unexpectedmaker
 
+# Join my discord server
+https://discord.com/invite/xAHpApP
+
 
 # Unexpected Maker
-http://youtube.com/c/unexpectedmaker
+https://unexpectedmaker.com
+
+http://youtube.com/unexpectedmaker
 
 http://twitter.com/unexpectedmaker
 
