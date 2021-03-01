@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v1.0.8 - 13/07/2020.
+  Reflow Master Control - v1.09 - 01/03/2021.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -26,7 +26,9 @@
   02/07/2020 v1.07  - Cleaned up some Fan control and tracking code
                     - Cleaned up some debug messages
   13/07/2020 v1.08  - Fixed bug in DEBUG mode
-  06/09/2020 v1.09  - Add profile for CHIPQUICK TS391AX paste
+  01/03/2021 v1.09  - Add profile for CHIPQUICK TS391AX paste
+                    - Adjusted SETTINGS_PASTE (state == 12) to fit 6 profiles in to screen
+                    - Adjusted cursor movement on SETTINGS_PASTE (state == 12) screen
   ---------------------------------------------------------------------------
 */
 
@@ -124,9 +126,9 @@ byte state; // 0 = ready, 1 = warmup, 2 = reflow, 3 = finished, 10 Menu, 11+ set
 byte state_settings = 0;
 byte settings_pointer = 0;
 
-// Initialise an array to hold 4 profiles
+// Initialise an array to hold 5 profiles
 // Increase this array if you plan to add more
-ReflowGraph solderPaste[5];
+ReflowGraph solderPaste[6];
 // Index into the current profile
 int currentGraphIndex = 0;
 
@@ -223,7 +225,7 @@ void LoadPaste()
   float baseGraphX5[7] = {1, 30, 120, 150, 210, 240, 360};  // time
   float baseGraphY5[7] = {25, 100, 150, 183, 235, 183, 50}; // value
 
-  solderPaste[5] = ReflowGraph("CHIPQUICK TS391AX", "No Clean Sn63/Pb37 T4", 183, baseGraphX1, baseGraphY1, ELEMENTS(baseGraphX5), 240, 300);
+  solderPaste[5] = ReflowGraph("CHIPQUICK TS391AX", "No Clean Sn63/Pb37 T4", 183, baseGraphX5, baseGraphY5, ELEMENTS(baseGraphX5), 240, 300);
 
   //TODO: Think of a better way to initalise these baseGraph arrays to not need unique array creation
 }
@@ -1046,7 +1048,7 @@ void ShowPaste()
     tft.println(solderPaste[i].t);
     tft.setTextColor(GREY, BLACK);
 
-    y += 40;
+    y += 30;
   }
 
   ShowMenuOptions(true);
@@ -1231,7 +1233,7 @@ void UpdateSettingsPointer()
     tft.setTextColor(BLUE, BLACK);
     tft.setTextSize(2);
     tft.fillRect(0, 20, 20, tft.height() - 20, BLACK);
-    tft.setCursor(5, (50 + (20 * (settings_pointer * 2))));
+    tft.setCursor(5, (50 + (15 * (settings_pointer * 2))));
     tft.println(">");
   }
 }
