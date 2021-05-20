@@ -810,7 +810,6 @@ void ReadCurrentTempAvg()
   else
   {
     tcError = 0;
-    float internal = tc.getInternal();
     currentTempAvg += tc.getTemperature() + set.tempOffset;
     avgReadCount++;
   }
@@ -829,7 +828,6 @@ void ReadCurrentTemp()
   else
   {
     tcError = 0;
-    float internal = tc.getInternal();
     currentTemp = tc.getTemperature() + set.tempOffset;
     currentTemp =  constrain(currentTemp, -10, 350);
 
@@ -1390,7 +1388,7 @@ void UpdateBakeMenu()
   tft.println(String(set.bakeTime / 60) + "min ");
 }
 
-void ShowBakeMenu( bool clearAll )
+void ShowBakeMenu()
 {
   state = BAKE_MENU;
 
@@ -1438,7 +1436,6 @@ void UpdateBake()
   tft.setTextSize(3);
   tft.setCursor( 20, 20 );
 
-  int tm = set.bakeTime - currentBakeTime;
   switch (currentBakeTimeCounter)
   {
     case 0:
@@ -1780,9 +1777,6 @@ void ShowOvenCheck()
   SetRelayFrequency( 0 );
   StartFan( true );
 
-  int posY = 50;
-  int incY = 20;
-
   debug_println("Oven Check");
 
   tft.fillScreen(BLACK);
@@ -2079,7 +2073,7 @@ void button1Press()
     {
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
-        ShowBakeMenu( true );
+        ShowBakeMenu();
       else
         Buzzer( 100, 250 );
     }
@@ -2244,10 +2238,8 @@ void button3LongPress()
 
 void SetupGraph(Adafruit_ILI9341 &d, double x, double y, double gx, double gy, double w, double h, double xlo, double xhi, double xinc, double ylo, double yhi, double yinc, String title, String xlabel, String ylabel, unsigned int gcolor, unsigned int acolor, unsigned int tcolor, unsigned int bcolor )
 {
-  double ydiv, xdiv;
   double i;
   int temp;
-  int rot, newrot;
 
   ox = (x - xlo) * ( w) / (xhi - xlo) + gx;
   oy = (y - ylo) * (gy - h - gy) / (yhi - ylo) + gy;
