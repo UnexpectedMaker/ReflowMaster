@@ -1145,7 +1145,7 @@ void ShowMenu()
   tft.setCursor( 20, tft.height() - 20 );
   tft.println("Reflow Master - Code v" + String(ver));
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
 void ShowSettings()
@@ -1212,7 +1212,7 @@ void ShowSettings()
 
   posY += incY;
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
 void ShowPaste()
@@ -1250,10 +1250,10 @@ void ShowPaste()
     y += 40;
   }
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
-void ShowMenuOptions( bool clearAll )
+void ShowButtonOptions( bool clearAll )
 {
   //  int buttonPosY[] = { 19, 74, 129, 184 };
   //  int buttonHeight = 16;
@@ -1611,7 +1611,7 @@ void StartWarmup()
 
   state = WARMUP;
   timeX = 0;
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
   lastWantedTemp = -1;
   buzzerCount = 5;
   keepFanOnTime = 0;
@@ -1635,7 +1635,7 @@ void StartReflow()
   tft.fillScreen(BLACK);
 
   state = REFLOW;
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 
   timeX = 0;
   SetupGraph(tft, 0, 0, 30, 220, 270, 180, graphRangeMin_X, graphRangeMax_X, graphRangeStep_X, graphRangeMin_Y, graphRangeMax_Y, graphRangeStep_Y, "Reflow Temp", " Time [s]", "deg [C]", DKBLUE, BLUE, WHITE, BLACK );
@@ -1685,7 +1685,7 @@ void EndReflow()
 
     DrawHeading( "DONE!", WHITE, BLACK );
 
-    ShowMenuOptions( false );
+    ShowButtonOptions( false );
 
     if ( set.useFan && set.fanTimeAfterReflow > 0 )
     {
@@ -1768,7 +1768,7 @@ void StartOvenCheck()
   tft.setCursor( 20, 60 );
   tft.println( String(CurrentGraph().tempDeg) + "deg");
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
 void ShowOvenCheck()
@@ -1788,7 +1788,7 @@ void ShowOvenCheck()
 
   tft.setTextColor( WHITE, BLACK );
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 
   tft.setTextSize(2);
   tft.setCursor( 0, 60 );
@@ -1832,7 +1832,7 @@ void ShowResetDefaults()
   tft.println( "ARE YOU SURE?" );
 
   state = SETTINGS_RESET;
-  ShowMenuOptions( false );
+  ShowButtonOptions( false );
 
   tft.setTextSize(1);
   tft.setTextColor( GREEN, BLACK );
@@ -2123,8 +2123,8 @@ void button2Press()
     else if ( state == SETTINGS )
     {
       settings_pointer = constrain( settings_pointer - 1, 0, 8 );
-      ShowMenuOptions( false );
-      //UpdateSettingsPointer();
+      ShowButtonOptions( false );
+      UpdateSettingsPointer();
     }
     else if ( state == SETTINGS_PASTE )
     {
@@ -2161,8 +2161,8 @@ void button3Press()
     else if ( state == SETTINGS )
     {
       settings_pointer = constrain( settings_pointer + 1, 0, 8 );
-      ShowMenuOptions( false );
-      //UpdateSettingsPointer();
+      ShowButtonOptions( false );
+      UpdateSettingsPointer();
     }
     else if ( state == SETTINGS_PASTE )
     {
