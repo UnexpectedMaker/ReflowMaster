@@ -57,6 +57,8 @@
 #include "ReflowMasterProfile.h"
 #include "FlashStorage.h"
 
+#include "menu_settings.h"
+
 // used to obtain the size of an array of any type
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
@@ -107,23 +109,6 @@
 #define DKPINK    0x9009
 #define DKPURPLE  0x4010
 #define DKGREY    0x4A49
-
-// Save data struct
-typedef struct {
-  boolean valid = false;
-  boolean useFan = false;
-  int fanTimeAfterReflow = 60;
-  byte paste = 0;
-  float power = 1;
-  int lookAhead = 6;
-  int lookAheadWarm = 1;
-  int tempOffset = 0;
-  long bakeTime = 1200; // 20 mins
-  float bakeTemp = 45; // Degrees C
-  int bakeTempGap = 3; // Aim for the desired temp minus this value to compensate for overrun
-  bool startFullBlast = false;
-  bool beep = true;
-} Settings;
 
 // UI and runtime states
 enum states {
@@ -1155,62 +1140,7 @@ void ShowSettings()
 
   newSettings = false;
 
-  int posY = 45;
-  int incY = 19;
-
-  tft.setTextColor( BLUE, BLACK );
-  tft.fillScreen(BLACK);
-
-  tft.setTextColor( BLUE, BLACK );
-  tft.setTextSize(2);
-  tft.setCursor( 20, 20 );
-  tft.println( "SETTINGS" );
-
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-  tft.print( "SWITCH PASTE" );
-
-  posY += incY;
-
-  // y 64
-  UpdateSettingsFan( posY );
-
-  posY += incY;
-
-  // y 83
-  UpdateSettingsFanTime( posY );
-
-  posY += incY;
-
-  // y 102
-  UpdateSettingsLookAhead( posY );
-
-  posY += incY;
-
-  // y 121
-  UpdateSettingsPower( posY );
-
-  posY += incY;
-
-  // y 140
-  UpdateSettingsTempOffset( posY );
-
-  posY += incY;
-
-  // y 159
-  UpdateSettingsStartFullBlast( posY );
-
-  posY += incY;
-
-  // y 178
-  UpdateSettingsBakeTempGap( posY );
-
-  posY += incY;
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-  tft.print( "RESET TO DEFAULTS" );
-
-  posY += incY;
+  SettingsPage::drawItems();
 
   ShowButtonOptions( true );
 }
@@ -1292,20 +1222,16 @@ void ShowButtonOptions( bool clearAll )
     // button 0
     tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
     tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    switch ( settings_pointer )
+
+    SettingsOption* ptr = SettingsOption::getIndex(settings_pointer);
+    switch (ptr->Mode)
     {
-
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-        println_Right( tft, "CHANGE", tft.width() - 27, buttonPosY[0] + 9 );
-        break;
-
-      default:
-        println_Right( tft, "SELECT", tft.width() - 27, buttonPosY[0] + 9 );
-        break;
+	case(OptionMode::Select):
+		println_Right(tft, "SELECT", tft.width() - 27, buttonPosY[0] + 9);
+		break;
+	case(OptionMode::Change):
+		println_Right(tft, "CHANGE", tft.width() - 27, buttonPosY[0] + 9);
+		break;
     }
 
     // button 1
@@ -1540,60 +1466,7 @@ void UpdateSettingsPointer()
 {
   if ( state == SETTINGS )
   {
-    tft.setTextColor( BLUE, BLACK );
-    tft.setTextSize(2);
-    tft.fillRect( 0, 20, 20, tft.height() - 20, BLACK );
-    tft.setCursor( 5, ( 45 + ( 19 * settings_pointer ) ) );
-    tft.println(">");
-
-    tft.setTextSize(1);
-    tft.setTextColor( GREEN, BLACK );
-    tft.fillRect( 0, tft.height() - 20, tft.width(), 20, BLACK );
-
-    int testPosY = tft.height() - 16;
-    switch ( settings_pointer )
-    {
-      case 0:
-        println_Center( tft, "Select which profile to reflow", tft.width() / 2, testPosY );
-        break;
-
-      case 1:
-        println_Center( tft, "Enable fan for end of reflow, requires 5V DC fan", tft.width() / 2, testPosY );
-        break;
-
-      case 2:
-        println_Center( tft, "Keep fan on for XXX sec after reflow", tft.width() / 2, testPosY );
-        break;
-
-      case 3:
-        println_Center( tft, "Soak and Reflow look ahead for rate change speed", tft.width() / 2, testPosY );
-        break;
-
-      case 4:
-        println_Center( tft, "Adjust the power boost", tft.width() / 2, testPosY );
-        break;
-
-      case 5:
-        println_Center( tft, "Adjust temp probe reading offset", tft.width() / 2, testPosY );
-        break;
-
-      case 6:
-        println_Center( tft, "Force full power on initial ramp-up - be careful!", tft.width() / 2, testPosY );
-        break;
-
-      case 7:
-        println_Center( tft, "Bake thermal mass adjustment, higher for more mass", tft.width() / 2, testPosY );
-        break;
-
-      case 8:
-        println_Center( tft, "Reset to default settings", tft.width() / 2, testPosY );
-        break;
-
-      default:
-        //println_Center( tft, "", tft.width() / 2, tft.height() - 20 );
-        break;
-    }
-    tft.setTextSize(2);
+    SettingsPage::drawCursor(settings_pointer);
   }
   else if ( state == SETTINGS_PASTE )
   {
@@ -1840,109 +1713,6 @@ void ShowResetDefaults()
   println_Center( tft, "Settings restore cannot be undone!", tft.width() / 2, tft.height() - 20 );
 }
 
-void UpdateSettingsFan( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 200, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-
-  tft.setTextColor( WHITE, BLACK );
-  tft.print( "USE FAN " );
-  tft.setTextColor( YELLOW, BLACK );
-
-  if ( set.useFan )
-  {
-    tft.println( "ON" );
-  }
-  else
-  {
-    tft.println( "OFF" );
-  }
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsFanTime( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 230, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-
-  tft.setTextColor( WHITE, BLACK );
-  tft.print( "FAN COUNTDOWN " );
-  tft.setTextColor( YELLOW, BLACK );
-
-  tft.println( String( set.fanTimeAfterReflow ) + "s");
-
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsStartFullBlast( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 240, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-  tft.print( "START RAMP 100% " );
-  tft.setTextColor( YELLOW, BLACK );
-
-  if ( set.startFullBlast )
-  {
-    tft.println( "ON" );
-  }
-  else
-  {
-    tft.println( "OFF" );
-  }
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsPower( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 240, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "POWER ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( round((set.power * 100))) + "%");
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsLookAhead( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 260, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "GRAPH LOOK AHEAD ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( set.lookAhead) );
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsBakeTempGap( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 260, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "BAKE TEMP GAP ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( set.bakeTempGap ) );
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsTempOffset( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 220, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "TEMP OFFSET ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( set.tempOffset) );
-  tft.setTextColor( WHITE, BLACK );
-}
-
 /*
    Button press code here
 */
@@ -1980,67 +1750,7 @@ void button0Press()
     }
     else if ( state == SETTINGS )
     {
-      if ( settings_pointer == 0 )  // change paste
-      {
-        settings_pointer = set.paste;
-        ShowPaste();
-      }
-      else if ( settings_pointer == 1 )  // switch fan use
-      {
-        set.useFan = !set.useFan;
-
-        UpdateSettingsFan( 64 );
-      }
-      else if ( settings_pointer == 2 ) // fan countdown after reflow
-      {
-        set.fanTimeAfterReflow += 5;
-        if ( set.fanTimeAfterReflow > 60 )
-          set.fanTimeAfterReflow = 0;
-
-        UpdateSettingsFanTime( 83 );
-      }
-      else if ( settings_pointer == 3 ) // change lookahead for reflow
-      {
-        set.lookAhead += 1;
-        if ( set.lookAhead > 15 )
-          set.lookAhead = 1;
-
-        UpdateSettingsLookAhead( 102 );
-      }
-      else if ( settings_pointer == 4 ) // change power
-      {
-        set.power += 0.1;
-        if ( set.power > 1.55 )
-          set.power = 0.5;
-
-        UpdateSettingsPower( 121 );
-      }
-      else if ( settings_pointer == 5 ) // change temp probe offset
-      {
-        set.tempOffset += 1;
-        if ( set.tempOffset > 15 )
-          set.tempOffset = -15;
-
-        UpdateSettingsTempOffset( 140 );
-      }
-      else if ( settings_pointer == 6 ) // change use full power on initial ramp
-      {
-        set.startFullBlast = !set.startFullBlast;
-
-        UpdateSettingsStartFullBlast( 159 );
-      }
-      else if ( settings_pointer == 7 ) // bake temp gap
-      {
-        set.bakeTempGap += 1;
-        if ( set.bakeTempGap > 5 )
-          set.bakeTempGap = 0;
-
-        UpdateSettingsBakeTempGap( 178 );
-      }
-      else if ( settings_pointer == 8 ) // reset defaults
-      {
-        ShowResetDefaults();
-      }
+      SettingsPage::changeOption(settings_pointer);
     }
     else if ( state == SETTINGS_PASTE )
     {
@@ -2122,7 +1832,7 @@ void button2Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrain( settings_pointer - 1, 0, 8 );
+      settings_pointer = constrain( settings_pointer - 1, 0, (int) SettingsOption::getCount() - 1 );
       ShowButtonOptions( false );
       UpdateSettingsPointer();
     }
@@ -2160,7 +1870,7 @@ void button3Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrain( settings_pointer + 1, 0, 8 );
+      settings_pointer = constrain( settings_pointer + 1, 0, (int) SettingsOption::getCount() - 1);
       ShowButtonOptions( false );
       UpdateSettingsPointer();
     }
