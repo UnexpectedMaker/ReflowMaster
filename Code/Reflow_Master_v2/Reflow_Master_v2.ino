@@ -166,7 +166,7 @@ float minBakeTemp = 45; // 45 Degrees C
 float maxBakeTemp = 100; // 100 Degrees C
 
 // Current index in the settings screen
-byte settings_pointer = 0;
+int settings_pointer = 0;
 
 // Initialise an array to hold 5 profiles
 // Increase this array if you plan to add more
@@ -1231,7 +1231,7 @@ void ShowPaste()
 
   int y = 50;
 
-  for ( int i = 0; i < ELEMENTS(solderPaste); i++ )
+  for ( size_t i = 0; i < ELEMENTS(solderPaste); i++ )
   {
     if ( i == set.paste )
       tft.setTextColor( YELLOW, BLACK );
@@ -2128,7 +2128,7 @@ void button2Press()
     }
     else if ( state == SETTINGS_PASTE )
     {
-      settings_pointer = constrain( settings_pointer - 1, 0, ELEMENTS(solderPaste) - 1 );
+      settings_pointer = constrain( settings_pointer - 1, 0, (int) ELEMENTS(solderPaste) - 1 );
       UpdateSettingsPointer();
     }
   }
@@ -2166,7 +2166,7 @@ void button3Press()
     }
     else if ( state == SETTINGS_PASTE )
     {
-      settings_pointer = constrain( settings_pointer + 1, 0, ELEMENTS(solderPaste) - 1 );
+      settings_pointer = constrain( settings_pointer + 1, 0, (int) ELEMENTS(solderPaste) - 1 );
       UpdateSettingsPointer();
     }
   }
