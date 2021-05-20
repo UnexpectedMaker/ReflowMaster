@@ -147,8 +147,8 @@ const String ver = "2.02";
 bool newSettings = false;
 
 // TC variables
-long nextTempRead;
-long nextTempAvgRead;
+unsigned long nextTempRead;
+unsigned long nextTempAvgRead;
 int avgReadCount = 0;
 
 unsigned long keepFanOnTime = 0;
@@ -1953,7 +1953,7 @@ void UpdateSettingsTempOffset( int posY )
    Button press code here
 */
 
-long nextButtonPress = 0;
+unsigned long nextButtonPress = 0;
 
 void button0Press()
 {
