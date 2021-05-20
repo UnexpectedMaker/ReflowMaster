@@ -2338,15 +2338,6 @@ void GraphDefault(Adafruit_ILI9341 &d, double x, double y, double gx, double gy,
   oy = y;
 }
 
-char* string2char(String command)
-{
-  if (command.length() != 0)
-  {
-    char *p = const_cast<char*>(command.c_str());
-    return p;
-  }
-}
-
 void println_Center( Adafruit_ILI9341 &d, String heading, int centerX, int centerY )
 {
   int x = 0;
@@ -2354,7 +2345,7 @@ void println_Center( Adafruit_ILI9341 &d, String heading, int centerX, int cente
   int16_t  x1, y1;
   uint16_t ww, hh;
 
-  d.getTextBounds( string2char(heading), x, y, &x1, &y1, &ww, &hh );
+  d.getTextBounds( heading.c_str(), x, y, &x1, &y1, &ww, &hh );
   d.setCursor( centerX - ww / 2 + 2, centerY - hh / 2);
   d.println( heading );
 }
@@ -2366,7 +2357,7 @@ void println_Right( Adafruit_ILI9341 &d, String heading, int centerX, int center
   int16_t  x1, y1;
   uint16_t ww, hh;
 
-  d.getTextBounds( string2char(heading), x, y, &x1, &y1, &ww, &hh );
+  d.getTextBounds( heading.c_str(), x, y, &x1, &y1, &ww, &hh );
   d.setCursor( centerX + ( 18 - ww ), centerY - hh / 2);
   d.println( heading );
 }
