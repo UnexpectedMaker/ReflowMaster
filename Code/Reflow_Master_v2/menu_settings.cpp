@@ -30,6 +30,9 @@
 template<>
 SettingsOption* LinkedList<SettingsOption>::head = nullptr;
 
+unsigned int SettingsPage::startingItem = 0;
+
+
 SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, bool refresh, OptionMode m)
 	:
 	ItemName(name), ItemDescription(desc),
@@ -76,9 +79,8 @@ void SettingsOption::drawDescription() {
 }
 
 
-void SettingsPage::drawItems() {
-	SettingsOption* ptr = SettingsOption::getHead();
-	size_t position = 0;
+void SettingsPage::drawPage() {
+	startingItem = 0;  // reset scrolling for initial draw
 
 	tft.fillScreen(BLACK);
 
@@ -87,12 +89,28 @@ void SettingsPage::drawItems() {
 	tft.setCursor(20, 20);
 	tft.println("SETTINGS");
 
-	tft.setTextColor(WHITE, BLACK);
+	drawItems();
+}
+
+void SettingsPage::redraw() {
+	// drawing over *only* the items, rather than the entire page (title, cursor, button prompts)
+	tft.fillRect(15, SettingsOption::getYPosition(0) - 5, 240, SettingsOption::getYPosition(ItemsPerPage), BLACK);
+	
+	drawItems();
+}
+
+void SettingsPage::drawItems() {
+	SettingsOption* ptr = SettingsOption::getHead();
+	size_t position = 0;
 
 	while (ptr != nullptr) {
-		ptr->drawItem(position);
+		if (position >= startingItem) {
+			ptr->drawItem(position - startingItem);
+		}
 		position++;
 		ptr = ptr->getNext();
+
+		if (position > startingItem + SettingsPage::ItemsPerPage) break;  // break when we've filled the page
 	}
 }
 
@@ -100,10 +118,23 @@ void SettingsPage::drawCursor(unsigned int pos) {
 	SettingsOption* ptr = SettingsOption::getIndex(pos);
 	if (ptr == nullptr) return;  // out of range
 
+	// Find if we're offscreen and adjust items accordingly
+	if (pos < startingItem) {
+		startingItem--;
+		redraw();
+	}
+	else if (pos > startingItem + ItemsPerPage) {
+		startingItem++;
+		redraw();
+	}
+
+	const unsigned int selectedPos = pos - startingItem;
+
+	// Draw the actual cursor
 	tft.setTextColor(BLUE, BLACK);
 	tft.setTextSize(2);
 	tft.fillRect(0, 20, 20, tft.height() - 20, BLACK);
-	tft.setCursor(5, SettingsOption::getYPosition(pos));
+	tft.setCursor(5, SettingsOption::getYPosition(selectedPos));
 	tft.println(">");
 
 	ptr->drawDescription();
@@ -116,8 +147,6 @@ void SettingsPage::changeOption(unsigned int pos) {
 	ptr->setFunction();
 
 	if (ptr->RefreshOnChange == true) {
-		ptr->drawItem(SettingsOption::getPositionOf(ptr));
+		ptr->drawItem(SettingsOption::getPositionOf(ptr) - startingItem);
 	}
 }
-
-

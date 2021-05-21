@@ -1140,7 +1140,7 @@ void ShowSettings()
 
   newSettings = false;
 
-  SettingsPage::drawItems();
+  SettingsPage::drawPage();
 
   ShowButtonOptions( true );
 }

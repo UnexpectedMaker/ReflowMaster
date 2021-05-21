@@ -57,9 +57,17 @@ private:
 
 class SettingsPage {
 public:
-	static void drawItems();
+	static void drawPage();
+	static void redraw();
+
 	static void drawCursor(unsigned int pos);
 	static void changeOption(unsigned int pos);
+
+private:
+	static const unsigned int ItemsPerPage = 8;  // should be calculated given font size and screen space, but good enough for testing
+	static unsigned int startingItem;
+
+	static void drawItems();
 };
 
 
