@@ -85,7 +85,7 @@ class ReflowGraph
           reflowTangents[i] = 0;
       }
 
-      for ( int i = 0; i < ELEMENTS(wantedCurve); i++ )
+      for ( size_t i = 0; i < ELEMENTS(wantedCurve); i++ )
         wantedCurve[i] = -1;
     }
 
