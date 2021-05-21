@@ -90,6 +90,7 @@ void SettingsPage::drawPage() {
 	tft.println("SETTINGS");
 
 	drawItems();
+	// drawScrollIndicator();  // skipping this because it's drawn over by the button icons anyways
 }
 
 void SettingsPage::redraw() {
@@ -97,6 +98,7 @@ void SettingsPage::redraw() {
 	tft.fillRect(15, SettingsOption::getYPosition(0) - 5, 240, SettingsOption::getYPosition(ItemsPerPage), BLACK);
 	
 	drawItems();
+	drawScrollIndicator();
 }
 
 void SettingsPage::drawItems() {
@@ -149,4 +151,25 @@ void SettingsPage::changeOption(unsigned int pos) {
 	if (ptr->RefreshOnChange == true) {
 		ptr->drawItem(SettingsOption::getPositionOf(ptr) - startingItem);
 	}
+}
+
+void SettingsPage::drawScrollIndicator() {
+	if (SettingsOption::getCount() <= ItemsPerPage) return;  // no scrolling = no scroll indicator
+
+	const unsigned int Width = 15;
+	const unsigned int Height = 3;
+	const unsigned int MarginY = 2;
+	
+	const unsigned int XPos = tft.width() - (Width*2);
+	const unsigned int YMin = buttonPosY[2] + buttonHeight + MarginY;  // inside edge
+	const unsigned int YMax = buttonPosY[3] - MarginY;  // outside edge
+	//const unsigned int MaxYSpace = YMax - YMin;
+
+	const unsigned int NumPositions = (SettingsOption::getCount() - 1) - ItemsPerPage;  // -1 for zero index
+
+	const unsigned int yPos = map(startingItem, 0, NumPositions, YMin, YMax);
+
+	tft.fillRect(XPos, YMin, Width, YMax - YMin + Height, BLACK);  // clear area
+	tft.fillRect(XPos + Width / 2, YMin, 1, YMax - YMin + Height, WHITE);  // draw center line
+	tft.fillRect(XPos, yPos, Width, Height, BLUE);  // draw indicator
 }

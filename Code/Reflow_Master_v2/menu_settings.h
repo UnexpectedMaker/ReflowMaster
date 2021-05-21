@@ -61,6 +61,8 @@ public:
 	static void redraw();
 
 	static void drawCursor(unsigned int pos);
+	static void drawScrollIndicator();
+
 	static void changeOption(unsigned int pos);
 
 private:
@@ -73,5 +75,8 @@ private:
 
 extern Settings set;
 extern Adafruit_ILI9341 tft;
+
+extern int buttonPosY[];
+extern int buttonHeight;
 
 void println_Center(Adafruit_ILI9341& d, String heading, int centerX, int centerY);

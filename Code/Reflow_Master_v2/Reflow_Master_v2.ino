@@ -1143,6 +1143,8 @@ void ShowSettings()
   SettingsPage::drawPage();
 
   ShowButtonOptions( true );
+
+  SettingsPage::drawScrollIndicator();  // needs to be redrawn on top of buttons
 }
 
 void ShowPaste()
