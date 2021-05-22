@@ -5,13 +5,13 @@
 
 // Save data struct
 typedef struct {
-	boolean valid = false;
+	boolean valid = true;
 	boolean useFan = false;
 	int fanTimeAfterReflow = 60;
 	byte paste = 0;
 	float power = 1;
-	int lookAhead = 6;
-	int lookAheadWarm = 1;
+	int lookAhead = 7;
+	int lookAheadWarm = 7;
 	int tempOffset = 0;
 	long bakeTime = 1200; // 20 mins
 	float bakeTemp = 45; // Degrees C
