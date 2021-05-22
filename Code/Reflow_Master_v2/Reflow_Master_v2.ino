@@ -209,9 +209,9 @@ OneButton button2(BUTTON2, false);
 OneButton button3(BUTTON3, false);
 
 // UI button positions and sizes
-int buttonPosY[] = { 19, 74, 129, 184 };
-int buttonHeight = 16;
-int buttonWidth = 4;
+const unsigned int buttonPosY[] = { 19, 74, 129, 184 };
+const unsigned int buttonHeight = 16;
+const unsigned int buttonWidth = 4;
 
 // Initiliase a reference for the settings file that we store in flash storage
 Settings set;
@@ -1185,12 +1185,14 @@ void ShowPaste()
   ShowButtonOptions( true );
 }
 
+void DrawButton(uint8_t index, const String& str, uint32_t color)
+{
+  tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, color);  // box
+  println_Right(tft, str, tft.width() - 27, buttonPosY[index] + 9);  // text
+}
+
 void ShowButtonOptions( bool clearAll )
 {
-  //  int buttonPosY[] = { 19, 74, 129, 184 };
-  //  int buttonHeight = 16;
-  //  int buttonWidth = 4;
-
   tft.setTextColor( WHITE, BLACK );
   tft.setTextSize(2);
 
@@ -1203,106 +1205,59 @@ void ShowButtonOptions( bool clearAll )
 
   if ( state == MENU )
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "REFLOW", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BAKE", tft.width() - 27, buttonPosY[1] + 9 );
-
-    // button 2
-    tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-    println_Right( tft, "SETTINGS", tft.width() - 27, buttonPosY[2] + 9 );
-
-    // button 3
-    tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-    println_Right( tft, "OVEN CHECK", tft.width() - 27, buttonPosY[3] + 9 );
+    DrawButton(0, "REFLOW", GREEN);
+    DrawButton(1, "BAKE", RED);
+    DrawButton(2, "SETTINGS", BLUE);
+    DrawButton(3, "OVEN CHECK", YELLOW);
   }
   else if ( state == SETTINGS )
   {
-    // button 0
-    tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
+    //tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
 
     SettingsOption* ptr = SettingsOption::getIndex(settings_pointer);
     switch (ptr->Mode)
     {
 	case(OptionMode::Select):
-		println_Right(tft, "SELECT", tft.width() - 27, buttonPosY[0] + 9);
+		DrawButton(0, "SELECT", GREEN);
 		break;
 	case(OptionMode::Change):
-		println_Right(tft, "CHANGE", tft.width() - 27, buttonPosY[0] + 9);
+		DrawButton(0, "CHANGE", GREEN);
 		break;
     }
 
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
-
-    // button 2
-    tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-    println_Right( tft, "/\\", tft.width() - 27, buttonPosY[2] + 9 );
-
-    // button 3
-    tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-    println_Right( tft, "\\/", tft.width() - 27, buttonPosY[3] + 9 );
+    DrawButton(1, "BACK", RED);
+    DrawButton(2, "/\\", BLUE);
+    DrawButton(3, "\\/", YELLOW);
 
     UpdateSettingsPointer();
   }
   else if ( state == SETTINGS_PASTE )
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "SELECT", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
-
-    // button 2
-    tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-    println_Right( tft, "/\\", tft.width() - 27, buttonPosY[2] + 9 );
-
-    // button 3
-    tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-    println_Right( tft, "\\/", tft.width() - 27, buttonPosY[3] + 9 );
+    DrawButton(0, "SELECT", GREEN);
+    DrawButton(1, "BACK", RED);
+    DrawButton(2, "/\\", BLUE);
+    DrawButton(3, "\\/", YELLOW);
 
     UpdateSettingsPointer();
   }
   else if ( state == SETTINGS_RESET ) // restore settings to default
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "YES", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "NO", tft.width() - 27, buttonPosY[1] + 9 );
+    DrawButton(0, "YES", GREEN);
+    DrawButton(1, "NO", RED);
   }
   else if ( state == WARMUP || state == REFLOW || state == OVENCHECK_START ) // warmup, reflow, calibration
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "ABORT", tft.width() - 27, buttonPosY[0] + 9 );
+    DrawButton(0, "ABORT", GREEN);
   }
   else if ( state == FINISHED ) // Finished
   {
     tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "MENU", tft.width() - 27, buttonPosY[0] + 9 );
+    DrawButton(0, "MENU", GREEN);
   }
   else if ( state == OVENCHECK )
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "START", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
+    DrawButton(0, "START", GREEN);
+    DrawButton(1, "BACK", RED);
   }
 }
 
@@ -1378,22 +1333,11 @@ void ShowBakeMenu()
 
 
   tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-  // button 0
 
-  tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-  println_Right( tft, "START", tft.width() - 27, buttonPosY[0] + 9 );
-
-  // button 1
-  tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-  println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
-
-  // button 2
-  tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-  println_Right( tft, "+TEMP", tft.width() - 27, buttonPosY[2] + 9 );
-
-  // button 3
-  tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-  println_Right( tft, "+TIME", tft.width() - 27, buttonPosY[3] + 9 );
+  DrawButton(0, "START", GREEN);
+  DrawButton(1, "BACK", RED);
+  DrawButton(2, "+TEMP", BLUE);
+  DrawButton(3, "+TIME", YELLOW);
 
   UpdateBakeMenu();
 }
@@ -1461,9 +1405,7 @@ void StartBake()
   tft.setCursor( 20, 135 );
   tft.println( "TIME LEFT");
 
-  // button 0
-  tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-  println_Right( tft, "ABORT", tft.width() - 27, buttonPosY[0] + 9 );
+  DrawButton(0, "ABORT", GREEN);
 
   UpdateBake();
 }
@@ -1495,9 +1437,7 @@ void BakeDone()
   tft.setTextColor( WHITE, BLACK );
   tft.setTextSize(2);
 
-  // button 0
-  tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-  println_Right( tft, "MENU", tft.width() - 27, buttonPosY[0] + 9 );
+  DrawButton(0, "MENU", GREEN);
 
   delay(750);
   Buzzer( 2000, 500 );
