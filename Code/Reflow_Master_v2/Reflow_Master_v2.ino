@@ -85,6 +85,7 @@
 #define FAN A5     // fan control
 
 // Just a bunch of re-defined colours
+#define DEFAULT_COLOR 0xABCD0000  // magic value, not a real color
 #define BLUE      0x001F
 #define TEAL      0x0438
 #define GREEN     0x07E0
@@ -212,6 +213,8 @@ OneButton button3(BUTTON3, false);
 const unsigned int buttonPosY[] = { 19, 74, 129, 184 };
 const unsigned int buttonHeight = 16;
 const unsigned int buttonWidth = 4;
+const uint32_t ButtonColor[] = { GREEN, RED, BLUE, YELLOW };
+const unsigned int NumButtons = ELEMENTS(buttonPosY);
 
 // Initiliase a reference for the settings file that we store in flash storage
 Settings set;
@@ -1185,8 +1188,15 @@ void ShowPaste()
   ShowButtonOptions( true );
 }
 
+void DrawButton(uint8_t index, const String& str, uint32_t color = DEFAULT_COLOR);
+
 void DrawButton(uint8_t index, const String& str, uint32_t color)
 {
+  if (index >= NumButtons) return;
+
+  // if default, set colors based on button index
+  if (color == DEFAULT_COLOR) color = ButtonColor[index];
+
   tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, color);  // box
   println_Right(tft, str, tft.width() - 27, buttonPosY[index] + 9);  // text
 }
@@ -1205,10 +1215,10 @@ void ShowButtonOptions( bool clearAll )
 
   if ( state == MENU )
   {
-    DrawButton(0, "REFLOW", GREEN);
-    DrawButton(1, "BAKE", RED);
-    DrawButton(2, "SETTINGS", BLUE);
-    DrawButton(3, "OVEN CHECK", YELLOW);
+    DrawButton(0, "REFLOW");
+    DrawButton(1, "BAKE");
+    DrawButton(2, "SETTINGS");
+    DrawButton(3, "OVEN CHECK");
   }
   else if ( state == SETTINGS )
   {
@@ -1218,46 +1228,46 @@ void ShowButtonOptions( bool clearAll )
     switch (ptr->Mode)
     {
 	case(OptionMode::Select):
-		DrawButton(0, "SELECT", GREEN);
+		DrawButton(0, "SELECT");
 		break;
 	case(OptionMode::Change):
-		DrawButton(0, "CHANGE", GREEN);
+		DrawButton(0, "CHANGE");
 		break;
     }
 
-    DrawButton(1, "BACK", RED);
-    DrawButton(2, "/\\", BLUE);
-    DrawButton(3, "\\/", YELLOW);
+    DrawButton(1, "BACK");
+    DrawButton(2, "/\\");
+    DrawButton(3, "\\/");
 
     UpdateSettingsPointer();
   }
   else if ( state == SETTINGS_PASTE )
   {
-    DrawButton(0, "SELECT", GREEN);
-    DrawButton(1, "BACK", RED);
-    DrawButton(2, "/\\", BLUE);
-    DrawButton(3, "\\/", YELLOW);
+    DrawButton(0, "SELECT");
+    DrawButton(1, "BACK");
+    DrawButton(2, "/\\");
+    DrawButton(3, "\\/");
 
     UpdateSettingsPointer();
   }
   else if ( state == SETTINGS_RESET ) // restore settings to default
   {
-    DrawButton(0, "YES", GREEN);
-    DrawButton(1, "NO", RED);
+    DrawButton(0, "YES");
+    DrawButton(1, "NO");
   }
   else if ( state == WARMUP || state == REFLOW || state == OVENCHECK_START ) // warmup, reflow, calibration
   {
-    DrawButton(0, "ABORT", GREEN);
+    DrawButton(0, "ABORT");
   }
   else if ( state == FINISHED ) // Finished
   {
     tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-    DrawButton(0, "MENU", GREEN);
+    DrawButton(0, "MENU");
   }
   else if ( state == OVENCHECK )
   {
-    DrawButton(0, "START", GREEN);
-    DrawButton(1, "BACK", RED);
+    DrawButton(0, "START");
+    DrawButton(1, "BACK");
   }
 }
 
@@ -1334,10 +1344,10 @@ void ShowBakeMenu()
 
   tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
 
-  DrawButton(0, "START", GREEN);
-  DrawButton(1, "BACK", RED);
-  DrawButton(2, "+TEMP", BLUE);
-  DrawButton(3, "+TIME", YELLOW);
+  DrawButton(0, "START");
+  DrawButton(1, "BACK");
+  DrawButton(2, "+TEMP");
+  DrawButton(3, "+TIME");
 
   UpdateBakeMenu();
 }
@@ -1405,7 +1415,7 @@ void StartBake()
   tft.setCursor( 20, 135 );
   tft.println( "TIME LEFT");
 
-  DrawButton(0, "ABORT", GREEN);
+  DrawButton(0, "ABORT");
 
   UpdateBake();
 }
@@ -1437,7 +1447,7 @@ void BakeDone()
   tft.setTextColor( WHITE, BLACK );
   tft.setTextSize(2);
 
-  DrawButton(0, "MENU", GREEN);
+  DrawButton(0, "MENU");
 
   delay(750);
   Buzzer( 2000, 500 );
