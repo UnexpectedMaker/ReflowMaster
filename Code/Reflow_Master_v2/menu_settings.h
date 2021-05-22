@@ -66,7 +66,7 @@ public:
 	static void changeOption(unsigned int pos);
 
 private:
-	static const unsigned int ItemsPerPage = 8;  // should be calculated given font size and screen space, but good enough for testing
+	static const unsigned int ItemsPerPage = 9;  // should be calculated given font size and screen space, but good enough for testing
 	static unsigned int startingItem;
 
 	static void drawItems();

@@ -112,7 +112,7 @@ void SettingsPage::drawItems() {
 		position++;
 		ptr = ptr->getNext();
 
-		if (position > startingItem + SettingsPage::ItemsPerPage) break;  // break when we've filled the page
+		if (position > startingItem + SettingsPage::ItemsPerPage - 1) break;  // break when we've filled the page (-1 for zero index)
 	}
 }
 
@@ -125,8 +125,8 @@ void SettingsPage::drawCursor(unsigned int pos) {
 		startingItem--;
 		redraw();
 	}
-	else if (pos > startingItem + ItemsPerPage) {
 		startingItem++;
+	else if (pos > startingItem + ItemsPerPage - 1) {  // -1 for zero index
 		redraw();
 	}
 
