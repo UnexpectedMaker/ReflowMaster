@@ -110,15 +110,15 @@ SettingsOption OptionBakeTempGap("BAKE TEMP GAP", "Bake thermal mass adjustment,
 
 
 // "Disable Buzzer" menu option
-String getBeepSetting() {
+String getBuzzerSetting() {
 	return set.beep ? "OFF" : "ON";  // inverted, as the setting is to 'disable'
 }
 
-void setBeepSetting() {
+void setBuzzerSetting() {
 	set.beep = !set.beep;
 }
 
-SettingsOption OptionBeep("DISABLE BUZZER", "Disable the buzzer beep in all modes", getBeepSetting, setBeepSetting, true, OptionMode::Change);
+SettingsOption OptionBuzzer("DISABLE BUZZER", "Disable buzzer noise in ALL modes", getBuzzerSetting, setBuzzerSetting, true, OptionMode::Change);
 
 
 // ############################################################################
