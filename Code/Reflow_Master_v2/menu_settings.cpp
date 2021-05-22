@@ -96,6 +96,9 @@ void SettingsPage::drawPage() {
 void SettingsPage::redraw() {
 	// drawing over *only* the items, rather than the entire page (title, cursor, button prompts)
 	tft.fillRect(15, SettingsOption::getYPosition(0) - 5, 240, SettingsOption::getYPosition(ItemsPerPage), BLACK);
+
+	// clear the description box as well
+	tft.fillRect(0, tft.height() - 20, tft.width(), 20, BLACK);
 	
 	drawItems();
 	drawScrollIndicator();
