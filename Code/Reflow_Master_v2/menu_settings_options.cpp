@@ -109,6 +109,18 @@ void changeBakeTempGap() {
 SettingsOption OptionBakeTempGap("BAKE TEMP GAP", "Bake thermal mass adjustment, higher for more mass", getBakeTempGap, changeBakeTempGap, true, OptionMode::Change);
 
 
+// "Key Tone" menu option
+String getKeyToneSetting() {
+	return set.keyTone ? "ON" : "OFF";
+}
+
+void setKeyToneSetting() {
+	set.keyTone = !set.keyTone;
+}
+
+SettingsOption OptionKeyTone("KEY TONE", "Make a noise whenever a button is pressed", getKeyToneSetting, setKeyToneSetting, true, OptionMode::Change);
+
+
 // "Disable Buzzer" menu option
 String getBuzzerSetting() {
 	return set.beep ? "OFF" : "ON";  // inverted, as the setting is to 'disable'

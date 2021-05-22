@@ -18,6 +18,7 @@ typedef struct {
 	int bakeTempGap = 3; // Aim for the desired temp minus this value to compensate for overrun
 	bool startFullBlast = false;
 	bool beep = true;
+	bool keyTone = true;
 } Settings;
 
 

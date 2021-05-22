@@ -1747,6 +1747,12 @@ void ShowResetDefaults()
    Button press code here
 */
 
+void KeyTone(int hertz, int len)
+{
+  if (!set.keyTone) return;
+  Buzzer(hertz, len);
+}
+
 unsigned long nextButtonPress = 0;
 
 void button0Press()
@@ -1754,7 +1760,7 @@ void button0Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
@@ -1807,7 +1813,7 @@ void button1Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
@@ -1845,7 +1851,7 @@ void button2Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
@@ -1880,7 +1886,7 @@ void button3Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
@@ -1918,9 +1924,9 @@ void button2LongPressStart()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 10;
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
     delay(50);
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
   }
 }
 
@@ -1947,9 +1953,9 @@ void button3LongPressStart()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
     delay(50);
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
   }
 }
 
