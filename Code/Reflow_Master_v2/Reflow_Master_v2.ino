@@ -1618,20 +1618,8 @@ void EndReflow()
 
 void SetDefaults()
 {
-  // Default settings values
-  set.valid = true;
-  set.fanTimeAfterReflow = 60;
-  set.power = 1;
-  set.paste = 0;
-  set.useFan = false;
-  set.lookAhead = 7;
-  set.lookAheadWarm = 7;
-  set.startFullBlast = false;
-  set.tempOffset = 0;
-  set.beep = true;
-  set.bakeTime = 1200;
-  set.bakeTemp = 45;
-  set.bakeTempGap = 3;
+  // recreate struct using default constructor
+  set = Settings();
 }
 
 void ResetSettingsToDefault()
