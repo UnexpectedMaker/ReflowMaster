@@ -8,6 +8,7 @@ public:
 	static T* getHead() { return head; }
 	T* getNext() { return next; }
 
+	// indexed at 1
 	static size_t getCount() {
 		size_t count = 0;
 		T* ptr = head;

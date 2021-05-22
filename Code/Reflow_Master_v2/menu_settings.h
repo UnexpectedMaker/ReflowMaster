@@ -70,6 +70,14 @@ private:
 	static unsigned int startingItem;
 
 	static void drawItems();
+
+	enum class ScrollType {
+		Smooth,  // at the end of current page, moves all items up by one
+		Paged,   // at the end of the current page, draws an entire new page of items
+	};
+	static const ScrollType Scroll = ScrollType::Paged;
+
+	static void updateScroll(int dir);
 };
 
 
