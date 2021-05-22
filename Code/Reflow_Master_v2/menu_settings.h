@@ -84,7 +84,7 @@ private:
 extern Settings set;
 extern Adafruit_ILI9341 tft;
 
-extern int buttonPosY[];
-extern int buttonHeight;
+void ShowScrollIndicator(float, uint32_t);
+void ShowPageIndicator(unsigned int, unsigned int, uint32_t);
 
 void println_Center(Adafruit_ILI9341& d, String heading, int centerX, int centerY);

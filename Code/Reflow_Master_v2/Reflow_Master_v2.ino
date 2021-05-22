@@ -1306,6 +1306,46 @@ void ShowButtonOptions( bool clearAll )
   }
 }
 
+void ShowScrollIndicator(float pct, uint32_t color)
+{
+	     if (pct < 0.0) pct = 0.0;
+	else if (pct > 1.0) pct = 1.0;
+
+	const unsigned int Width = 15;  // all values in pixels
+	const unsigned int Height = 3;
+	const unsigned int MarginY = 2;
+
+	const unsigned int XPos = tft.width() - (Width * 2);
+	const unsigned int YMin = buttonPosY[2] + buttonHeight + MarginY;  // inside edge
+	const unsigned int YMax = buttonPosY[3] - MarginY;  // outside edge
+
+	const unsigned int YRange = YMax - YMin;  // total range + number of options
+
+	const unsigned int yPos = (pct * (float) YRange) + YMin;  // position of indicator
+
+	tft.fillRect(XPos, YMin, Width, YMax - YMin + Height, BLACK);  // clear area
+	tft.fillRect(XPos + Width / 2, YMin, 1, YMax - YMin + Height, WHITE);  // draw center line
+	tft.fillRect(XPos, yPos, Width, Height, color);  // draw indicator
+}
+
+void ShowPageIndicator(unsigned int page, unsigned int numPages, uint32_t color)
+{
+	const unsigned int TextWidth = 31;  // total width from right edge, ballpark
+	const unsigned int TextHeight = 8;  // with text size '1'
+	const unsigned int XPos = tft.width() - TextWidth;  // left edge
+	const unsigned int YPos = (buttonPosY[2] + buttonPosY[3]) / 2 + (TextHeight / 2);
+
+	tft.fillRect(XPos, YPos, TextWidth, TextHeight, BLACK);  // clear area
+
+	tft.setTextColor(color, BLACK);
+	tft.setTextSize(1);
+	tft.setCursor(XPos, YPos);
+
+	tft.print(page);
+	tft.print('/');
+	tft.print(numPages);
+}
+
 void UpdateBakeMenu()
 {
   tft.setTextColor( YELLOW, BLACK );

@@ -172,44 +172,19 @@ void SettingsPage::drawScrollIndicator() {
 	switch (Scroll) {
 	case(ScrollType::Smooth):
 	{
-		const unsigned int Width = 15;
-		const unsigned int Height = 3;
-		const unsigned int MarginY = 2;
-
-		const unsigned int XPos = tft.width() - (Width * 2);
-		const unsigned int YMin = buttonPosY[2] + buttonHeight + MarginY;  // inside edge
-		const unsigned int YMax = buttonPosY[3] - MarginY;  // outside edge
-
-		const unsigned int NumPositions = (SettingsOption::getCount() - 1) - ItemsPerPage;  // -1 for zero index
-
-		const unsigned int yPos = map(startingItem, 0, NumPositions, YMin, YMax);
-
-		tft.fillRect(XPos, YMin, Width, YMax - YMin + Height, BLACK);  // clear area
-		tft.fillRect(XPos + Width / 2, YMin, 1, YMax - YMin + Height, WHITE);  // draw center line
-		tft.fillRect(XPos, yPos, Width, Height, BLUE);  // draw indicator
-
+		const unsigned int NumPositions = SettingsOption::getCount() - ItemsPerPage;
+		const float value = (float) startingItem / (float) NumPositions;
+		
+		ShowScrollIndicator(value, BLUE);
 		break;
 	}
 	case(ScrollType::Paged):
 	{
-		const unsigned int TextWidth = 31;
-		const unsigned int TextHeight = 8;  // with text size '1'
-		const unsigned int XPos = tft.width() - TextWidth;
-		const unsigned int YPos = (buttonPosY[2] + buttonPosY[3]) / 2 + (TextHeight / 2);
-
 		const unsigned int Page = (startingItem / ItemsPerPage) + 1;
 		const unsigned int NumItems = SettingsOption::getCount();
 		const unsigned int NumPages = (NumItems / ItemsPerPage) + ((NumItems % ItemsPerPage != 0) ? 1 : 0);
-
-		tft.fillRect(XPos, YPos, TextWidth, TextHeight, BLACK);  // clear area
-
-		tft.setTextColor(WHITE, BLACK);
-		tft.setTextSize(1);
-		tft.setCursor(XPos, YPos);
-
-		tft.print(Page);
-		tft.print('/');
-		tft.print(NumPages);
+		ShowPageIndicator(Page, NumPages, WHITE);
+		break;
 	}
 	}
 }
