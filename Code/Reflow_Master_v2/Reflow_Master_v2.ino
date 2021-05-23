@@ -215,6 +215,7 @@ const unsigned int buttonHeight = 16;
 const unsigned int buttonWidth = 4;
 const uint32_t ButtonColor[] = { GREEN, RED, BLUE, YELLOW };
 const unsigned int NumButtons = ELEMENTS(buttonPosY);
+String buttonText[NumButtons];
 
 // Initiliase a reference for the settings file that we store in flash storage
 Settings set;
@@ -1188,16 +1189,20 @@ void ShowPaste()
   ShowButtonOptions( true );
 }
 
-void DrawButton(uint8_t index, const String& str, uint32_t color = DEFAULT_COLOR);
+void DrawButton(uint8_t index, const String& str, uint32_t textColor = WHITE, uint32_t boxColor = DEFAULT_COLOR);
 
-void DrawButton(uint8_t index, const String& str, uint32_t color)
+void DrawButton(uint8_t index, const String& str, uint32_t textColor, uint32_t boxColor)
 {
   if (index >= NumButtons) return;
 
   // if default, set colors based on button index
-  if (color == DEFAULT_COLOR) color = ButtonColor[index];
+  if (boxColor == DEFAULT_COLOR) boxColor = ButtonColor[index];
 
-  tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, color);  // box
+  tft.setTextColor(textColor, BLACK);
+  tft.setTextSize(2);
+
+  buttonText[index] = str;  // save text for reference
+  tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, boxColor);  // box
   println_Right(tft, str, tft.width() - 27, buttonPosY[index] + 9);  // text
 }
 
@@ -1268,6 +1273,21 @@ void ShowButtonOptions( bool clearAll )
   {
     DrawButton(0, "START");
     DrawButton(1, "BACK");
+  }
+}
+
+void FlashButtonText(unsigned int index, uint32_t colorSteady = WHITE, uint32_t colorBlink = RED, unsigned int hertz = 5, unsigned int count = 2);
+
+void FlashButtonText(unsigned int index, uint32_t colorSteady, uint32_t colorBlink, unsigned int hertz, unsigned int count)
+{
+  if (index >= NumButtons) return;  // out of range
+  const unsigned long period = 1000 / (hertz * 2);  // in ms
+
+  for (unsigned int i = 0; i < count; i++) {
+    DrawButton(index, buttonText[index], colorBlink);
+    delay(period);
+    DrawButton(index, buttonText[index], colorSteady);
+    if(i != count - 1) delay(period);  // delay if not on last loop
   }
 }
 
@@ -1717,8 +1737,10 @@ void button0Press()
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
         StartWarmup();
-      else
-        Buzzer( 100, 250 );
+      else {
+        Buzzer(100, 250);
+        FlashButtonText(0);
+      }
     }
     else if ( state == BAKE_MENU )
     {
@@ -1770,8 +1792,10 @@ void button1Press()
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
         ShowBakeMenu();
-      else
+      else {
         Buzzer( 100, 250 );
+        FlashButtonText(1);
+      }
     }
     else if ( state == SETTINGS ) // leaving settings so save
     {
@@ -1843,8 +1867,10 @@ void button3Press()
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
         ShowOvenCheck();
-      else
+      else {
         Buzzer( 100, 250 );
+        FlashButtonText(3);
+      }
     }
     else if ( state == BAKE_MENU )
     {
