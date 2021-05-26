@@ -79,8 +79,9 @@ void SettingsOption::drawDescription() {
 }
 
 
-void SettingsPage::drawPage() {
-	startingItem = 0;  // reset scrolling for initial draw
+void SettingsPage::drawPage(unsigned int pos) {
+	startingItem = 0;  // reset pagination
+	updateScroll(pos);  // recalculate pagination for current position
 
 	tft.fillScreen(BLACK);
 
@@ -93,12 +94,15 @@ void SettingsPage::drawPage() {
 	// drawScrollIndicator();  // skipping this because it's drawn over by the button icons anyways
 }
 
-void SettingsPage::redraw() {
+void SettingsPage::redraw(unsigned int pos) {
 	// drawing over *only* the items, rather than the entire page (title, cursor, button prompts)
 	tft.fillRect(15, SettingsOption::getYPosition(0) - 5, 240, SettingsOption::getYPosition(ItemsPerPage), BLACK);
 
 	// clear the description box as well
 	tft.fillRect(0, tft.height() - 20, tft.width(), 20, BLACK);
+
+	// recalculate pagination for current position (if necessary)
+	updateScroll(pos);
 	
 	drawItems();
 	drawScrollIndicator();
@@ -128,7 +132,7 @@ void SettingsPage::drawCursor(unsigned int pos) {
 
 	// If the current selection is not on the page, we need to redraw the list accordingly
 	if (updateScroll(pos)) {
-		redraw();  // redraws those items on the screen
+		redraw(pos);  // redraws those items on the screen
 	}
 
 	const unsigned int selectedPos = pos - startingItem;

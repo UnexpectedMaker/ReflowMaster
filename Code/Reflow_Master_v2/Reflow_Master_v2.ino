@@ -1144,7 +1144,7 @@ void ShowSettings()
 
   newSettings = false;
 
-  SettingsPage::drawPage();
+  SettingsPage::drawPage(settings_pointer);
 
   ShowButtonOptions( false );
 
@@ -1820,10 +1820,14 @@ void button1Press()
       flash_store.write(set);
       ShowMenu();
     }
-    else if ( state == SETTINGS_PASTE || state == SETTINGS_RESET )
+    else if ( state == SETTINGS_PASTE)
     {
-      settings_pointer = 0;
+      settings_pointer = 0;  // reset pointer so we stop at the top of the settings list
       ShowSettings();
+    }
+    else if (state == SETTINGS_RESET)  // cancel settings reset
+    {
+      ShowSettings();  // do *not* reset pointer so we stay at the same menu item
     }
     else if ( state == OVENCHECK ) // cancel oven check
     {

@@ -58,8 +58,8 @@ private:
 
 class SettingsPage {
 public:
-	static void drawPage();
-	static void redraw();
+	static void drawPage(unsigned int pos);
+	static void redraw(unsigned int pos);
 
 	static void drawCursor(unsigned int pos);
 	static void drawScrollIndicator();
