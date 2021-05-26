@@ -53,17 +53,52 @@ unsigned long SettingsOption::getYPosition(unsigned int index) {
 }
 
 void SettingsOption::drawItem(unsigned int position) {
+	const unsigned int xPos = ItemStartX;
 	const unsigned int yPos = getYPosition(position);
-	tft.fillRect(15, yPos - 5, 240, ItemHeight, BLACK);
-	tft.setCursor(20, yPos);
+
+	int16_t clearX, clearY;
+	uint16_t clearWidth, clearHeight;
 
 	tft.setTextSize(2);
+	tft.getTextBounds(ItemName + " ", xPos, yPos, &clearX, &clearY, &clearWidth, &clearHeight);
+	tft.fillRect(clearX, clearY, clearWidth, clearHeight, BLACK);  // clear text area
+
+	tft.setCursor(xPos, yPos);
+
 	tft.setTextColor(WHITE, BLACK);
 	tft.print(ItemName);
 	tft.print(' ');
 
+	this->drawValue(position);
+}
+
+void SettingsOption::drawValue(unsigned int position) {
+	const unsigned int yPos = getYPosition(position);
+
+	int16_t nameX, dummyY;
+	uint16_t nameWidth, dummyHeight;
+
+	// Calculate size of item name to set cursor at end
+	tft.setTextSize(2);
+	tft.getTextBounds(ItemName + " ", ItemStartX, yPos, &nameX, &dummyY, &nameWidth, &dummyHeight);
+
+	const unsigned int xPos = nameX + nameWidth;  // start at the end of the item name
+
+	// Note that we're not reusing the variables from above because the program seems to get
+	// confused and use the values from the first call rather than the second (potentially an optimization issue?)
+	int16_t clearX, clearY;
+	uint16_t clearWidth, clearHeight;
+
+	// Calculate size of item description for clearing (using last value)
+	tft.setTextSize(2);
+	tft.getTextBounds(lastValue, xPos, yPos, &clearX, &clearY, &clearWidth, &clearHeight);
+	tft.fillRect(clearX, clearY, clearWidth, clearHeight, BLACK);  // clear area
+
+	tft.setCursor(xPos, yPos);
 	tft.setTextColor(YELLOW, BLACK);
 	tft.print(getFunction());
+
+	lastValue = getFunction();  // save value so we know how much to 'clear' for next call
 }
 
 void SettingsOption::drawDescription() {
@@ -153,7 +188,7 @@ void SettingsPage::changeOption(unsigned int pos) {
 	ptr->setFunction();
 
 	if (ptr->RefreshOnChange == true) {
-		ptr->drawItem(SettingsOption::getPositionOf(ptr) - startingItem);
+		ptr->drawValue(SettingsOption::getPositionOf(ptr) - startingItem);
 	}
 }
 

@@ -49,11 +49,15 @@ public:
 	static unsigned long getYPosition(unsigned int index);
 
 	void drawItem(unsigned int posY);
+	void drawValue(unsigned int posY);
 	void drawDescription();
 
 private:
 	static const unsigned int ItemHeight = 19;
+	static const unsigned int ItemStartX = 20;
 	static const unsigned int ItemStartY = 45;
+
+	String lastValue;
 };
 
 class SettingsPage {
