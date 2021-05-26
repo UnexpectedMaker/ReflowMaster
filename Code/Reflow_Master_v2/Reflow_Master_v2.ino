@@ -1147,6 +1147,7 @@ void ShowSettings()
   SettingsPage::drawPage(settings_pointer);
 
   ShowButtonOptions( false );
+  UpdateSettingsPointer();
 
   SettingsPage::drawScrollIndicator();  // needs to be redrawn on top of buttons
 }
@@ -1231,8 +1232,6 @@ void ShowButtonOptions( bool clearAll )
     DrawButton(1, "BACK");
     DrawButton(2, "/\\");
     DrawButton(3, "\\/");
-
-    UpdateSettingsPointer();
   }
   else if ( state == SETTINGS_PASTE )
   {
