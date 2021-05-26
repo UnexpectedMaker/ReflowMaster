@@ -1147,7 +1147,7 @@ void ShowSettings()
   SettingsPage::drawPage(settings_pointer);
 
   ShowButtonOptions( false );
-  UpdateSettingsPointer();
+  DrawSettingsPointer();
 
   SettingsPage::drawScrollIndicator();  // needs to be redrawn on top of buttons
 }
@@ -1240,7 +1240,7 @@ void ShowButtonOptions( bool clearAll )
     DrawButton(2, "/\\");
     DrawButton(3, "\\/");
 
-    UpdateSettingsPointer();
+    DrawSettingsPointer();
   }
   else if ( state == SETTINGS_RESET ) // restore settings to default
   {
@@ -1461,7 +1461,7 @@ void BakeDone()
 
 }
 
-void UpdateSettingsPointer()
+void DrawSettingsPointer()
 {
   if ( state == SETTINGS )
   {
@@ -1852,12 +1852,12 @@ void button2Press()
     {
       settings_pointer = constrainLoop( settings_pointer - 1, 0, (int) SettingsOption::getCount() - 1 );
       ShowButtonOptions( false );
-      UpdateSettingsPointer();
+      DrawSettingsPointer();
     }
     else if ( state == SETTINGS_PASTE )
     {
       settings_pointer = constrain( settings_pointer - 1, 0, (int) ELEMENTS(solderPaste) - 1 );
-      UpdateSettingsPointer();
+      DrawSettingsPointer();
     }
   }
 }
@@ -1892,12 +1892,12 @@ void button3Press()
     {
       settings_pointer = constrainLoop( settings_pointer + 1, 0, (int) SettingsOption::getCount() - 1);
       ShowButtonOptions( false );
-      UpdateSettingsPointer();
+      DrawSettingsPointer();
     }
     else if ( state == SETTINGS_PASTE )
     {
       settings_pointer = constrain( settings_pointer + 1, 0, (int) ELEMENTS(solderPaste) - 1 );
-      UpdateSettingsPointer();
+      DrawSettingsPointer();
     }
   }
 }
