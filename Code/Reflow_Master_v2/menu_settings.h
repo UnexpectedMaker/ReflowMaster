@@ -47,6 +47,7 @@ public:
 	~SettingsOption();
 
 	static unsigned long getYPosition(unsigned int index);
+	String getModeString() const;
 
 	void drawItem(unsigned int posY);
 	void drawValue(unsigned int posY);
@@ -69,6 +70,8 @@ public:
 	static void drawScrollIndicator();
 
 	static void changeOption(unsigned int pos);
+
+	static String getButtonText(unsigned int pos);
 
 private:
 	static const unsigned int ItemsPerPage = 9;  // should be calculated given font size and screen space, but good enough for testing

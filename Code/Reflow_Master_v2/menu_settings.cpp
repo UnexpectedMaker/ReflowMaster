@@ -113,6 +113,19 @@ void SettingsOption::drawDescription() {
 	println_Center(tft, this->ItemDescription, tft.width() / 2, textPosY);
 }
 
+String SettingsOption::getModeString() const {
+	switch (Mode)
+	{
+	case(OptionMode::Select):
+		return "SELECT";
+		break;
+	case(OptionMode::Change):
+		return "CHANGE";
+		break;
+	}
+	return "";  // invalid
+}
+
 
 void SettingsPage::drawPage(unsigned int pos) {
 	startingItem = 0;  // reset pagination
@@ -240,3 +253,10 @@ void SettingsPage::drawScrollIndicator() {
 	}
 	}
 }
+
+String SettingsPage::getButtonText(unsigned int pos) {
+	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
+	if (ptr == nullptr) return "";
+	return ptr->getModeString();
+}
+

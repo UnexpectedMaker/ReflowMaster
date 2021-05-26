@@ -1227,19 +1227,7 @@ void ShowButtonOptions( bool clearAll )
   }
   else if ( state == SETTINGS )
   {
-    //tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-
-    SettingsOption* ptr = SettingsOption::getItemAtIndex(settings_pointer);
-    switch (ptr->Mode)
-    {
-	case(OptionMode::Select):
-		DrawButton(0, "SELECT");
-		break;
-	case(OptionMode::Change):
-		DrawButton(0, "CHANGE");
-		break;
-    }
-
+    DrawButton(0, SettingsPage::getButtonText(settings_pointer));
     DrawButton(1, "BACK");
     DrawButton(2, "/\\");
     DrawButton(3, "\\/");
