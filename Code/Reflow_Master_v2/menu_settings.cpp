@@ -126,14 +126,9 @@ void SettingsPage::drawCursor(unsigned int pos) {
 	// Clear cursor
 	tft.fillRect(0, 20, 20, tft.height() - 20, BLACK);
 
-	// Find if we're offscreen and adjust items accordingly
-	if (pos < startingItem) {
-		updateScroll(-1);  // decrement
-		redraw();
-	}
-	else if (pos > startingItem + ItemsPerPage - 1) {  // -1 for zero index
-		updateScroll(1);  // increment
-		redraw();
+	// If the current selection is not on the page, we need to redraw the list accordingly
+	if (updateScroll(pos)) {
+		redraw();  // redraws those items on the screen
 	}
 
 	const unsigned int selectedPos = pos - startingItem;
@@ -158,15 +153,30 @@ void SettingsPage::changeOption(unsigned int pos) {
 	}
 }
 
-void SettingsPage::updateScroll(int dir) {
+bool SettingsPage::updateScroll(unsigned int pos) {
+	if (onPage(pos)) return false;  // already on page, don't update
+
 	switch (Scroll) {
 	case(ScrollType::Smooth):
-		startingItem += dir;
+		if (pos < startingItem) {
+			// 'decrement' to current as first
+			startingItem = pos;
+		}
+		else if (pos > lastItem()) {
+			// 'increment' to position as last
+			startingItem = pos - ItemsPerPage + 1;  // +1 for 0 index
+		}
 		break;
 	case(ScrollType::Paged):
-		startingItem += dir * ItemsPerPage;
+	{
+		const unsigned int Page = (pos / ItemsPerPage);  // page for this item
+		const unsigned int PageStart = Page * ItemsPerPage;  // starting item for that page
+		startingItem = PageStart;
 		break;
 	}
+	}
+
+	return true;
 }
 
 void SettingsPage::drawScrollIndicator() {

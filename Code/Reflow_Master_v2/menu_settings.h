@@ -78,7 +78,11 @@ private:
 	};
 	static const ScrollType Scroll = ScrollType::Paged;
 
-	static void updateScroll(int dir);
+	static bool updateScroll(unsigned int pos);
+
+	static unsigned int lastItem() { return startingItem + ItemsPerPage - 1; }  // indexed at 0
+	static bool onPage(unsigned int item) { return item >= startingItem && item <= lastItem(); }
+	
 };
 
 

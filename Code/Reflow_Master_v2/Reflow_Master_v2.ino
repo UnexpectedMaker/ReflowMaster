@@ -1723,6 +1723,23 @@ void KeyTone(int hertz, int len)
   Buzzer(hertz, len);
 }
 
+// returns the a value limited to the min and max ranges, rolling over
+// values below and above the provided range as if it was continuous
+int constrainLoop(int value, int min, int max)
+{
+	// rollover up
+	if (value > max) {
+		int diff = (value - max - 1) % (max - min + 1);
+		return constrain(min + diff, min, max);
+	}
+	// rollover down
+	else if (value < min) {
+		int diff = (value - min + 1) % (max - min + 1);
+		return constrain(max + diff, min, max);
+	}
+	return value;
+}
+
 unsigned long nextButtonPress = 0;
 
 void button0Press()
@@ -1842,7 +1859,7 @@ void button2Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrain( settings_pointer - 1, 0, (int) SettingsOption::getCount() - 1 );
+      settings_pointer = constrainLoop( settings_pointer - 1, 0, (int) SettingsOption::getCount() - 1 );
       ShowButtonOptions( false );
       UpdateSettingsPointer();
     }
@@ -1882,7 +1899,7 @@ void button3Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrain( settings_pointer + 1, 0, (int) SettingsOption::getCount() - 1);
+      settings_pointer = constrainLoop( settings_pointer + 1, 0, (int) SettingsOption::getCount() - 1);
       ShowButtonOptions( false );
       UpdateSettingsPointer();
     }
