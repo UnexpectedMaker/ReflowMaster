@@ -1229,7 +1229,7 @@ void ShowButtonOptions( bool clearAll )
   {
     //tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
 
-    SettingsOption* ptr = SettingsOption::getIndex(settings_pointer);
+    SettingsOption* ptr = SettingsOption::getItemAtIndex(settings_pointer);
     switch (ptr->Mode)
     {
 	case(OptionMode::Select):

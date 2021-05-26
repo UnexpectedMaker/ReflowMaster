@@ -124,7 +124,7 @@ void SettingsPage::drawItems() {
 }
 
 void SettingsPage::drawCursor(unsigned int pos) {
-	SettingsOption* ptr = SettingsOption::getIndex(pos);
+	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
 	if (ptr == nullptr) return;  // out of range
 
 	// Clear cursor
@@ -147,7 +147,7 @@ void SettingsPage::drawCursor(unsigned int pos) {
 }
 
 void SettingsPage::changeOption(unsigned int pos) {
-	SettingsOption* ptr = SettingsOption::getIndex(pos);
+	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
 	if (ptr == nullptr) return;
 
 	ptr->setFunction();

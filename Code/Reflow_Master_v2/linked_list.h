@@ -19,7 +19,7 @@ public:
 		return count;
 	}
 
-	static T* getIndex(unsigned int i) { 
+	static T* getItemAtIndex(unsigned int i) { 
 		T* ptr = head;
 		while (ptr != nullptr && i != 0) {
 			ptr = ptr->getNext();
