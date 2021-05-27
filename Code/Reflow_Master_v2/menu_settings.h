@@ -40,10 +40,9 @@ public:
 	const MenuGetFunc getFunction;
 	const MenuSetFunc setFunction;
 
-	const bool RefreshOnChange;
 	const OptionMode Mode;
 
-	SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, bool refresh, OptionMode m);
+	SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m);
 	~SettingsOption();
 
 	static unsigned long getYPosition(unsigned int index);

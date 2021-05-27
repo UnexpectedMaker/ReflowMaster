@@ -33,11 +33,10 @@ SettingsOption* LinkedList<SettingsOption>::head = nullptr;
 unsigned int SettingsPage::startingItem = 0;
 
 
-SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, bool refresh, OptionMode m)
+SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m)
 	:
 	ItemName(name), ItemDescription(desc),
 	getFunction(get), setFunction(set),
-	RefreshOnChange(refresh),
 	Mode(m)
 {
 	LinkedList<SettingsOption>::add(this);
@@ -200,8 +199,13 @@ void SettingsPage::changeOption(unsigned int pos) {
 
 	ptr->setFunction();
 
-	if (ptr->RefreshOnChange == true) {
+	switch (ptr->Mode) {
+	case(OptionMode::Select):
+		// do nothing here, we're loading a new menu instead
+		break;
+	case(OptionMode::Change):
 		ptr->drawValue(SettingsOption::getPositionOf(ptr) - startingItem);
+		break;
 	}
 }
 
