@@ -65,19 +65,19 @@ public:
 	static void pressButton(unsigned int num);
 
 	static void drawPage(bool resetSelection = true);
-	static void redraw();
-
-	static void drawCursor();
-	static void drawScrollIndicator();
-
-	static void changeOption(unsigned int pos);
-
 	static String getButtonText();
 
 private:
 	static const unsigned int ItemsPerPage = 9;  // should be calculated given font size and screen space, but good enough for testing
 	static unsigned int startingItem;  // first item on the page (indexed at 0)
 	static unsigned int selectedItem;  // currently selected item in the list (indexed at 0)
+
+	static void redraw();
+
+	static void drawCursor();
+	static void drawScrollIndicator();
+
+	static void changeOption(unsigned int pos);
 
 	static void drawItems();
 
@@ -91,7 +91,6 @@ private:
 
 	static unsigned int lastItem() { return startingItem + ItemsPerPage - 1; }  // indexed at 0
 	static bool onPage(unsigned int item) { return item >= startingItem && item <= lastItem(); }
-	
 };
 
 
