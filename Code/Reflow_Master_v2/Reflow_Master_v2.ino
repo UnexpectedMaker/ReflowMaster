@@ -1109,14 +1109,16 @@ void ShowMenu()
   ShowButtonOptions( true );
 }
 
-void ShowSettings()
+void ShowSettings(bool resetSelection = true);
+
+void ShowSettings(bool resetSelection)
 {
   state = SETTINGS;
   SetRelayFrequency( 0 );
 
   newSettings = false;
 
-  SettingsPage::drawPage(settings_pointer);
+  SettingsPage::drawPage(resetSelection);
 
   ShowButtonOptions( false );
   DrawSettingsPointer();
@@ -1206,7 +1208,7 @@ void ShowButtonOptions( bool clearAll )
   }
   else if ( state == SETTINGS )
   {
-    DrawButton(0, SettingsPage::getButtonText(settings_pointer));
+    DrawButton(0, SettingsPage::getButtonText());
     DrawButton(1, "BACK");
     DrawButton(2, "/\\");
     DrawButton(3, "\\/");
@@ -1443,7 +1445,7 @@ void DrawSettingsPointer()
 {
   if ( state == SETTINGS )
   {
-    SettingsPage::drawCursor(settings_pointer);
+    SettingsPage::drawCursor();
   }
   else if ( state == SETTINGS_PASTE )
   {
@@ -1567,7 +1569,6 @@ void ResetSettingsToDefault()
   SetCurrentGraph( set.paste );
 
   // show settings
-  settings_pointer = 0;
   ShowSettings();
 }
 
@@ -1790,7 +1791,7 @@ void button1Press()
     }
     else if (state == SETTINGS_RESET)  // cancel settings reset
     {
-      ShowSettings();  // do *not* reset pointer so we stay at the same menu item
+      ShowSettings(false);  // do *not* reset pagination
     }
     else if ( state == OVENCHECK ) // cancel oven check
     {

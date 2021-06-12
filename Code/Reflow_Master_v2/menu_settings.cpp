@@ -5,6 +5,7 @@ template<>
 SettingsOption* LinkedList<SettingsOption>::head = nullptr;
 
 unsigned int SettingsPage::startingItem = 0;
+unsigned int SettingsPage::selectedItem = 0;
 
 
 SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m)
@@ -105,7 +106,7 @@ void SettingsPage::pressButton(unsigned int num) {
 	
 	// Select
 	case(0):
-		changeOption(settings_pointer);
+		changeOption(selectedItem);
 		break;
 
 	// Back
@@ -116,14 +117,14 @@ void SettingsPage::pressButton(unsigned int num) {
 
 	// Up List
 	case(2):
-		settings_pointer = constrainLoop(settings_pointer - 1, 0, (int)SettingsOption::getCount() - 1);
+		selectedItem = constrainLoop(selectedItem - 1, 0, (int)SettingsOption::getCount() - 1);
 		ShowButtonOptions(false);
 		DrawSettingsPointer();
 		break;
 
 	// Down List
 	case(3):
-		settings_pointer = constrainLoop(settings_pointer + 1, 0, (int)SettingsOption::getCount() - 1);
+		selectedItem = constrainLoop(selectedItem + 1, 0, (int)SettingsOption::getCount() - 1);
 		ShowButtonOptions(false);
 		DrawSettingsPointer();
 		break;
@@ -131,9 +132,11 @@ void SettingsPage::pressButton(unsigned int num) {
 }
 
 
-void SettingsPage::drawPage(unsigned int pos) {
-	startingItem = 0;  // reset pagination
-	updateScroll(pos);  // recalculate pagination for current position
+void SettingsPage::drawPage(bool resetSelection) {
+	if (resetSelection) {
+		selectedItem = startingItem = 0;  // reset pagination
+	}
+	updateScroll();  // recalculate pagination for current position
 
 	tft.fillScreen(BLACK);
 
@@ -146,7 +149,7 @@ void SettingsPage::drawPage(unsigned int pos) {
 	// drawScrollIndicator();  // skipping this because it's drawn over by the button icons anyways
 }
 
-void SettingsPage::redraw(unsigned int pos) {
+void SettingsPage::redraw() {
 	// drawing over *only* the items, rather than the entire page (title, cursor, button prompts)
 	tft.fillRect(15, SettingsOption::getYPosition(0) - 5, 240, SettingsOption::getYPosition(ItemsPerPage), BLACK);
 
@@ -154,7 +157,7 @@ void SettingsPage::redraw(unsigned int pos) {
 	tft.fillRect(0, tft.height() - 20, tft.width(), 20, BLACK);
 
 	// recalculate pagination for current position (if necessary)
-	updateScroll(pos);
+	updateScroll();
 	
 	drawItems();
 	drawScrollIndicator();
@@ -175,19 +178,19 @@ void SettingsPage::drawItems() {
 	}
 }
 
-void SettingsPage::drawCursor(unsigned int pos) {
-	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
+void SettingsPage::drawCursor() {
+	SettingsOption* ptr = SettingsOption::getItemAtIndex(selectedItem);
 	if (ptr == nullptr) return;  // out of range
 
 	// Clear cursor
 	tft.fillRect(0, 20, 20, tft.height() - 20, BLACK);
 
 	// If the current selection is not on the page, we need to redraw the list accordingly
-	if (updateScroll(pos)) {
-		redraw(pos);  // redraws those items on the screen
+	if (updateScroll()) {
+		redraw();  // redraws those items on the screen
 	}
 
-	const unsigned int selectedPos = pos - startingItem;
+	const unsigned int selectedPos = selectedItem - startingItem;
 
 	// Draw the actual cursor
 	tft.setTextColor(BLUE, BLACK);
@@ -214,23 +217,23 @@ void SettingsPage::changeOption(unsigned int pos) {
 	}
 }
 
-bool SettingsPage::updateScroll(unsigned int pos) {
-	if (onPage(pos)) return false;  // already on page, don't update
+bool SettingsPage::updateScroll() {
+	if (onPage(selectedItem)) return false;  // already on page, don't update
 
 	switch (Scroll) {
 	case(ScrollType::Smooth):
-		if (pos < startingItem) {
+		if (selectedItem < startingItem) {
 			// 'decrement' to current as first
-			startingItem = pos;
+			startingItem = selectedItem;
 		}
-		else if (pos > lastItem()) {
+		else if (selectedItem > lastItem()) {
 			// 'increment' to position as last
-			startingItem = pos - ItemsPerPage + 1;  // +1 for 0 index
+			startingItem = selectedItem - ItemsPerPage + 1;  // +1 for 0 index
 		}
 		break;
 	case(ScrollType::Paged):
 	{
-		const unsigned int Page = (pos / ItemsPerPage);  // page for this item
+		const unsigned int Page = (selectedItem / ItemsPerPage);  // page for this item
 		const unsigned int PageStart = Page * ItemsPerPage;  // starting item for that page
 		startingItem = PageStart;
 		break;
@@ -263,8 +266,8 @@ void SettingsPage::drawScrollIndicator() {
 	}
 }
 
-String SettingsPage::getButtonText(unsigned int pos) {
-	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
+String SettingsPage::getButtonText() {
+	SettingsOption* ptr = SettingsOption::getItemAtIndex(selectedItem);
 	if (ptr == nullptr) return "";
 	return ptr->getModeString();
 }
