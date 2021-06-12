@@ -218,7 +218,7 @@ void SettingsPage::drawScrollIndicator() {
 		const unsigned int NumPositions = SettingsOption::getCount() - ItemsPerPage;
 		const float value = (float) startingItem / (float) NumPositions;
 		
-		ShowScrollIndicator(value, BLUE);
+		DrawScrollIndicator(value, BLUE);
 		break;
 	}
 	case(ScrollType::Paged):
@@ -226,7 +226,7 @@ void SettingsPage::drawScrollIndicator() {
 		const unsigned int Page = (startingItem / ItemsPerPage) + 1;
 		const unsigned int NumItems = SettingsOption::getCount();
 		const unsigned int NumPages = (NumItems / ItemsPerPage) + ((NumItems % ItemsPerPage != 0) ? 1 : 0);
-		ShowPageIndicator(Page, NumPages, WHITE);
+		DrawPageIndicator(Page, NumPages, WHITE);
 		break;
 	}
 	}

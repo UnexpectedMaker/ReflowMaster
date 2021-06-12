@@ -94,7 +94,7 @@ private:
 
 extern Settings set;
 
-void ShowScrollIndicator(float, uint32_t);
-void ShowPageIndicator(unsigned int, unsigned int, uint32_t);
+void DrawScrollIndicator(float, uint32_t);
+void DrawPageIndicator(unsigned int, unsigned int, uint32_t);
 
 void println_Center(Adafruit_ILI9341& d, String heading, int centerX, int centerY);

@@ -1250,7 +1250,7 @@ void FlashButtonText(unsigned int index, uint32_t colorSteady, uint32_t colorBli
   }
 }
 
-void ShowScrollIndicator(float pct, uint32_t color)
+void DrawScrollIndicator(float pct, uint32_t color)
 {
 	     if (pct < 0.0) pct = 0.0;
 	else if (pct > 1.0) pct = 1.0;
@@ -1272,7 +1272,7 @@ void ShowScrollIndicator(float pct, uint32_t color)
 	tft.fillRect(XPos, yPos, Width, Height, color);  // draw indicator
 }
 
-void ShowPageIndicator(unsigned int page, unsigned int numPages, uint32_t color)
+void DrawPageIndicator(unsigned int page, unsigned int numPages, uint32_t color)
 {
 	const unsigned int TextWidth = 31;  // total width from right edge, ballpark
 	const unsigned int TextHeight = 8;  // with text size '1'
