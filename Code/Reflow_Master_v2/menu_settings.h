@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <Adafruit_ILI9341.h>  // for TFT drawing
 
+#include "tft_display.h"
 #include "linked_list.h"
 
 // Save data struct
@@ -93,7 +93,6 @@ private:
 
 
 extern Settings set;
-extern Adafruit_ILI9341 tft;
 
 void ShowScrollIndicator(float, uint32_t);
 void ShowPageIndicator(unsigned int, unsigned int, uint32_t);
