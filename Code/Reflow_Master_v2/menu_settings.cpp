@@ -119,14 +119,14 @@ void SettingsPage::pressButton(unsigned int num) {
 	case(2):
 		selectedItem = constrainLoop(selectedItem - 1, 0, (int)SettingsOption::getCount() - 1);
 		ShowButtonOptions(false);
-		DrawSettingsPointer();
+		drawCursor();
 		break;
 
 	// Down List
 	case(3):
 		selectedItem = constrainLoop(selectedItem + 1, 0, (int)SettingsOption::getCount() - 1);
 		ShowButtonOptions(false);
-		DrawSettingsPointer();
+		drawCursor();
 		break;
 	}
 }
@@ -146,7 +146,10 @@ void SettingsPage::drawPage(bool resetSelection) {
 	tft.println("SETTINGS");
 
 	drawItems();
-	// drawScrollIndicator();  // skipping this because it's drawn over by the button icons anyways
+
+	ShowButtonOptions(false);
+	drawCursor();
+	drawScrollIndicator();  // needs to be redrawn on top of buttons
 }
 
 void SettingsPage::redraw() {

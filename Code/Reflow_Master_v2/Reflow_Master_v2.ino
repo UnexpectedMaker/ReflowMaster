@@ -1119,11 +1119,6 @@ void ShowSettings(bool resetSelection)
   newSettings = false;
 
   SettingsPage::drawPage(resetSelection);
-
-  ShowButtonOptions( false );
-  DrawSettingsPointer();
-
-  SettingsPage::drawScrollIndicator();  // needs to be redrawn on top of buttons
 }
 
 void ExitSettings()
@@ -1443,11 +1438,7 @@ void BakeDone()
 
 void DrawSettingsPointer()
 {
-  if ( state == SETTINGS )
-  {
-    SettingsPage::drawCursor();
-  }
-  else if ( state == SETTINGS_PASTE )
+  if ( state == SETTINGS_PASTE )
   {
     tft.setTextColor( BLUE, BLACK );
     tft.setTextSize(2);

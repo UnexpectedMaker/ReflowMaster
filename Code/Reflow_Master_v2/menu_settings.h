@@ -101,7 +101,6 @@ int constrainLoop(int value, int min, int max);
 
 void ExitSettings();
 
-void DrawSettingsPointer();
 void DrawScrollIndicator(float, uint32_t);
 void DrawPageIndicator(unsigned int, unsigned int, uint32_t);
 
