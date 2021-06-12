@@ -1124,6 +1124,12 @@ void ShowSettings()
   SettingsPage::drawScrollIndicator();  // needs to be redrawn on top of buttons
 }
 
+void ExitSettings()
+{
+  flash_store.write(set);
+  ShowMenu();
+}
+
 void ShowPaste()
 {
   state = SETTINGS_PASTE;
@@ -1734,7 +1740,7 @@ void button0Press()
     }
     else if ( state == SETTINGS )
     {
-      SettingsPage::changeOption(settings_pointer);
+      SettingsPage::pressButton(0);
     }
     else if ( state == SETTINGS_PASTE )
     {
@@ -1775,9 +1781,7 @@ void button1Press()
     }
     else if ( state == SETTINGS ) // leaving settings so save
     {
-      // save data in flash
-      flash_store.write(set);
-      ShowMenu();
+      SettingsPage::pressButton(1);
     }
     else if ( state == SETTINGS_PASTE)
     {
@@ -1822,9 +1826,7 @@ void button2Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrainLoop( settings_pointer - 1, 0, (int) SettingsOption::getCount() - 1 );
-      ShowButtonOptions( false );
-      DrawSettingsPointer();
+      SettingsPage::pressButton(2);
     }
     else if ( state == SETTINGS_PASTE )
     {
@@ -1862,9 +1864,7 @@ void button3Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrainLoop( settings_pointer + 1, 0, (int) SettingsOption::getCount() - 1);
-      ShowButtonOptions( false );
-      DrawSettingsPointer();
+      SettingsPage::pressButton(3);
     }
     else if ( state == SETTINGS_PASTE )
     {

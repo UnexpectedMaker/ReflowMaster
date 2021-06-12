@@ -100,6 +100,37 @@ String SettingsOption::getModeString() const {
 }
 
 
+void SettingsPage::pressButton(unsigned int num) {
+	switch (num) {
+	
+	// Select
+	case(0):
+		changeOption(settings_pointer);
+		break;
+
+	// Back
+	case(1):
+		// save data in flash
+		ExitSettings();
+		break;
+
+	// Up List
+	case(2):
+		settings_pointer = constrainLoop(settings_pointer - 1, 0, (int)SettingsOption::getCount() - 1);
+		ShowButtonOptions(false);
+		DrawSettingsPointer();
+		break;
+
+	// Down List
+	case(3):
+		settings_pointer = constrainLoop(settings_pointer + 1, 0, (int)SettingsOption::getCount() - 1);
+		ShowButtonOptions(false);
+		DrawSettingsPointer();
+		break;
+	}
+}
+
+
 void SettingsPage::drawPage(unsigned int pos) {
 	startingItem = 0;  // reset pagination
 	updateScroll(pos);  // recalculate pagination for current position

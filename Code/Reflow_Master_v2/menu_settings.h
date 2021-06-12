@@ -62,6 +62,8 @@ private:
 
 class SettingsPage {
 public:
+	static void pressButton(unsigned int num);
+
 	static void drawPage(unsigned int pos);
 	static void redraw(unsigned int pos);
 
@@ -93,8 +95,16 @@ private:
 
 
 extern Settings set;
+extern int settings_pointer;
 
+int constrainLoop(int value, int min, int max);
+
+void ExitSettings();
+
+void DrawSettingsPointer();
 void DrawScrollIndicator(float, uint32_t);
 void DrawPageIndicator(unsigned int, unsigned int, uint32_t);
+
+void ShowButtonOptions(bool clearAll);
 
 void println_Center(Adafruit_ILI9341& d, String heading, int centerX, int centerY);
