@@ -1177,9 +1177,25 @@ void DrawButton(uint8_t index, const String& str, uint32_t textColor, uint32_t b
   tft.setTextColor(textColor, BLACK);
   tft.setTextSize(2);
 
+  const int XPos = tft.width() - 27;
+  const int YPos = buttonPosY[index] + 9;
+
   buttonText[index] = str;  // save text for reference
-  tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, boxColor);  // box
-  println_Right(tft, str, tft.width() - 27, buttonPosY[index] + 9);  // text
+  tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, boxColor);  // color box
+  println_Right(tft, str, XPos, YPos);  // text
+}
+
+void ClearButton(uint8_t index, uint32_t color = BLACK);
+
+void ClearButton(uint8_t index, uint32_t color)
+{
+  tft.setTextSize(2);
+  tft.setTextColor(color);
+
+  const int XPos = tft.width() - 27;
+  const int YPos = buttonPosY[index] + 9;
+
+  println_Right(tft, buttonText[index], XPos, YPos);
 }
 
 void ShowButtonOptions( bool clearAll )
@@ -1190,8 +1206,9 @@ void ShowButtonOptions( bool clearAll )
   if ( clearAll )
   {
     // Clear All
-    for ( int i = 0; i < 4; i++ )
-      tft.fillRect( tft.width() - 95,  buttonPosY[i] - 2, 95, buttonHeight + 4, BLACK );
+    for ( uint8_t i = 0; i < NumButtons; i++ )
+      //tft.fillRect( tft.width() - 95,  buttonPosY[i] - 2, 95, buttonHeight + 4, BLACK );
+      ClearButton(i);  // overwrite text exactly
   }
 
   if ( state == MENU )
