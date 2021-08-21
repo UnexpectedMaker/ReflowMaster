@@ -3,6 +3,8 @@
 void ShowPaste();
 void ShowResetDefaults();
 
+using OptionMode = SettingsOption::OptionMode;
+
 // "Switch Paste" menu option
 String getSwitchPaste() {
 	return "";

@@ -34,28 +34,22 @@ typedef struct {
 } Settings;
 
 
-enum class OptionMode {
-	Select,
-	Change,
-};
-
 class SettingsOption : public LinkedList<SettingsOption> {
 public:
+	enum class OptionMode {
+		Select,
+		Change,
+	};
+
 	friend LinkedList<SettingsOption>;
 
 	typedef String(*MenuGetFunc)();
 	typedef void (*MenuSetFunc)();
 
-	const String ItemName;
-	const String ItemDescription;
-
-	const MenuGetFunc getFunction;
-	const MenuSetFunc setFunction;
-
-	const OptionMode Mode;
-
 	SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m);
 	~SettingsOption();
+
+	bool changeValue();  // returns 'true' if we need to redraw
 
 	static unsigned long getYPosition(unsigned int index);
 	String getModeString() const;
@@ -68,6 +62,14 @@ private:
 	static const unsigned int ItemHeight = 19;
 	static const unsigned int ItemStartX = 20;
 	static const unsigned int ItemStartY = 45;
+
+	const OptionMode Mode;
+
+	const String ItemName;
+	const String ItemDescription;
+
+	const MenuGetFunc getFunction;
+	const MenuSetFunc setFunction;
 
 	String lastValue;
 };

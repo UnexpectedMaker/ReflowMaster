@@ -6,9 +6,9 @@ SettingsOption* LinkedList<SettingsOption>::head = nullptr;
 
 SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m)
 	:
+	Mode(m),
 	ItemName(name), ItemDescription(desc),
-	getFunction(get), setFunction(set),
-	Mode(m)
+	getFunction(get), setFunction(set)
 {
 	LinkedList<SettingsOption>::add(this);
 }
@@ -16,6 +16,13 @@ SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFu
 SettingsOption::~SettingsOption()
 {
 	LinkedList<SettingsOption>::remove(this);
+}
+
+bool SettingsOption::changeValue() {
+	if (this->setFunction != nullptr) {
+		this->setFunction();
+	}
+	return (Mode == OptionMode::Change);  // 'true' if we're changing and want to redraw this element
 }
 
 unsigned long SettingsOption::getYPosition(unsigned int index) {
@@ -231,15 +238,8 @@ void SettingsPage::changeOption(unsigned int pos) {
 	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
 	if (ptr == nullptr) return;
 
-	ptr->setFunction();
-
-	switch (ptr->Mode) {
-	case(OptionMode::Select):
-		// do nothing here, we're loading a new menu instead
-		break;
-	case(OptionMode::Change):
+	if (ptr->changeValue()) {
 		ptr->drawValue(SettingsOption::getPositionOf(ptr) - startingItem);
-		break;
 	}
 }
 
