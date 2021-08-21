@@ -4,10 +4,6 @@
 template<>
 SettingsOption* LinkedList<SettingsOption>::head = nullptr;
 
-unsigned int SettingsPage::startingItem = 0;
-unsigned int SettingsPage::selectedItem = 0;
-
-
 SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m)
 	:
 	ItemName(name), ItemDescription(desc),
@@ -98,6 +94,33 @@ String SettingsOption::getModeString() const {
 		break;
 	}
 	return "";  // invalid
+}
+
+namespace SettingsPage {
+	enum class ScrollType {
+		Smooth,  // at the end of current page, moves all items up by one
+		Paged,   // at the end of the current page, draws an entire new page of items
+	};
+
+	static const unsigned int ItemsPerPage = 9;  // should be calculated given font size and screen space, but good enough for now
+	static unsigned int startingItem = 0;  // first item on the page (indexed at 0)
+	static unsigned int selectedItem = 0;  // currently selected item in the list (indexed at 0)
+
+	static const ScrollType Scroll = ScrollType::Paged;
+
+	unsigned int lastItem() { return startingItem + ItemsPerPage - 1; }  // index of the last item in the list, indexed at 0
+	bool onPage(unsigned int item) { return item >= startingItem && item <= lastItem(); }  // returns 'true' if an item (index N) is on the page
+
+	void redraw();  // redraw the current page after a selection update
+
+	void drawCursor();  // draws the '>' cursor, and redraws the page / description if necessary
+	void drawScrollIndicator();  // draw the scroll indicator between buttons 3/4
+
+	void changeOption(unsigned int pos);  // runs the "change this option" function for the selected option
+
+	void drawItems();  // draw the item names and values across the page
+
+	bool updateScroll();  // recalculate scroll position and items on the screen
 }
 
 

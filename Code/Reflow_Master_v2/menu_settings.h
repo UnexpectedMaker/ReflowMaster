@@ -3,7 +3,19 @@
 #include "tft_display.h"
 #include "linked_list.h"
 
-// Save data struct
+// Forward-declare functions used in the menu
+int constrainLoop(int value, int min, int max);
+
+void ExitSettings();
+
+void DrawScrollIndicator(float, uint32_t);
+void DrawPageIndicator(unsigned int, unsigned int, uint32_t);
+
+void ShowButtonOptions(bool clearAll);
+
+void println_Center(Adafruit_ILI9341& d, String heading, int centerX, int centerY);
+
+// define settings data struct
 typedef struct {
 	boolean valid = true;
 	boolean useFan = false;
@@ -60,49 +72,12 @@ private:
 	String lastValue;
 };
 
-class SettingsPage {
-public:
-	static void pressButton(unsigned int num);
+namespace SettingsPage {
+	void pressButton(unsigned int num);  // record a button press on the settings page
 
-	static void drawPage(bool resetSelection = true);
-	static String getButtonText();
-
-private:
-	static const unsigned int ItemsPerPage = 9;  // should be calculated given font size and screen space, but good enough for testing
-	static unsigned int startingItem;  // first item on the page (indexed at 0)
-	static unsigned int selectedItem;  // currently selected item in the list (indexed at 0)
-
-	static void redraw();
-
-	static void drawCursor();
-	static void drawScrollIndicator();
-
-	static void changeOption(unsigned int pos);
-
-	static void drawItems();
-
-	enum class ScrollType {
-		Smooth,  // at the end of current page, moves all items up by one
-		Paged,   // at the end of the current page, draws an entire new page of items
-	};
-	static const ScrollType Scroll = ScrollType::Paged;
-
-	static bool updateScroll();
-
-	static unsigned int lastItem() { return startingItem + ItemsPerPage - 1; }  // indexed at 0
-	static bool onPage(unsigned int item) { return item >= startingItem && item <= lastItem(); }
+	void drawPage(bool resetSelection = true);  // draw the Settings page in its entirety
+	String getButtonText();  // get the string of text to describe button 0
 };
 
 
 extern Settings set;
-
-int constrainLoop(int value, int min, int max);
-
-void ExitSettings();
-
-void DrawScrollIndicator(float, uint32_t);
-void DrawPageIndicator(unsigned int, unsigned int, uint32_t);
-
-void ShowButtonOptions(bool clearAll);
-
-void println_Center(Adafruit_ILI9341& d, String heading, int centerX, int centerY);
