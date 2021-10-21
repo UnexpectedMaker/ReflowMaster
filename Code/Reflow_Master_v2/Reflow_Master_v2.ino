@@ -1021,6 +1021,7 @@ void Buzzer( int hertz, int len )
 // Startup Tune
 void BuzzerStart()
 {
+  if (!set.startupTune) return;
   tone( BUZZER, 262, 200);
   delay(210);
   tone( BUZZER, 523, 100);

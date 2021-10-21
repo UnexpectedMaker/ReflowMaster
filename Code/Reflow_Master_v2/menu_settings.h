@@ -31,6 +31,7 @@ typedef struct {
 	bool startFullBlast = false;
 	bool beep = true;
 	bool keyTone = true;
+	bool startupTune = true;
 } Settings;
 
 

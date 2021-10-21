@@ -133,6 +133,18 @@ void setBuzzerSetting() {
 SettingsOptionToggle OptionBuzzer("DISABLE BUZZER", "Disable buzzer noise in ALL modes", getBuzzerSetting, setBuzzerSetting);
 
 
+// "Startup Tone" menu option
+String getStartupTuneSetting() {
+	return set.startupTune ? "ON" : "OFF";
+}
+
+void setStartupTuneSetting() {
+	set.startupTune = !set.startupTune;
+}
+
+SettingsOptionToggle OptionStartupTune("STARTUP TUNE", "Play a little song on startup", getStartupTuneSetting, setStartupTuneSetting);
+
+
 // ############################################################################
 
 // "Reset to defaults" menu option
