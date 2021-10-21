@@ -36,34 +36,29 @@ typedef struct {
 
 class SettingsOption : public LinkedList<SettingsOption> {
 public:
-	enum class OptionMode {
-		Select,
-		Change,
-	};
-
 	friend LinkedList<SettingsOption>;
 
 	typedef String(*MenuGetFunc)();
 	typedef void (*MenuSetFunc)();
 
-	SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m);
-	~SettingsOption();
+	SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set);
+	virtual ~SettingsOption();
 
-	bool changeValue();  // returns 'true' if we need to redraw
+	bool modify();
 
 	static unsigned long getYPosition(unsigned int index);
-	String getModeString() const;
+	virtual String getModeString() const = 0;
 
 	void drawItem(unsigned int posY);
 	void drawValue(unsigned int posY);
 	void drawDescription();
 
 private:
+	virtual bool refreshOnModify() { return true; }
+
 	static const unsigned int ItemHeight = 19;
 	static const unsigned int ItemStartX = 20;
 	static const unsigned int ItemStartY = 45;
-
-	const OptionMode Mode;
 
 	const String ItemName;
 	const String ItemDescription;
@@ -73,6 +68,34 @@ private:
 
 	String lastValue;
 };
+
+
+class SettingsOptionLink : public SettingsOption {
+public:
+	using SettingsOption::SettingsOption;
+
+	String getModeString() const { return "SELECT"; }
+
+private:
+	// don't refresh the menu page on modify because we're
+	// moving to a different page entirely
+	bool refreshOnModify() { return false; }
+};
+
+class SettingsOptionAdjust : public SettingsOption {
+public:
+	using SettingsOption::SettingsOption;
+
+	String getModeString() const { return "CHANGE"; }
+};
+
+class SettingsOptionToggle : public SettingsOption {
+public:
+	using SettingsOption::SettingsOption;
+
+	String getModeString() const { return "TOGGLE"; }
+};
+
 
 namespace SettingsPage {
 	void pressButton(unsigned int num);  // record a button press on the settings page

@@ -4,9 +4,8 @@
 template<>
 SettingsOption* LinkedList<SettingsOption>::head = nullptr;
 
-SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set, OptionMode m)
+SettingsOption::SettingsOption(const String& name, const String& desc, MenuGetFunc get, MenuSetFunc set)
 	:
-	Mode(m),
 	ItemName(name), ItemDescription(desc),
 	getFunction(get), setFunction(set)
 {
@@ -18,11 +17,11 @@ SettingsOption::~SettingsOption()
 	LinkedList<SettingsOption>::remove(this);
 }
 
-bool SettingsOption::changeValue() {
+bool SettingsOption::modify() {
 	if (this->setFunction != nullptr) {
 		this->setFunction();
 	}
-	return (Mode == OptionMode::Change);  // 'true' if we're changing and want to redraw this element
+	return refreshOnModify();
 }
 
 unsigned long SettingsOption::getYPosition(unsigned int index) {
@@ -88,19 +87,6 @@ void SettingsOption::drawDescription() {
 
 	int textPosY = tft.height() - height_text;
 	println_Center(tft, this->ItemDescription, tft.width() / 2, textPosY);
-}
-
-String SettingsOption::getModeString() const {
-	switch (Mode)
-	{
-	case(OptionMode::Select):
-		return "SELECT";
-		break;
-	case(OptionMode::Change):
-		return "CHANGE";
-		break;
-	}
-	return "";  // invalid
 }
 
 namespace SettingsPage {
@@ -238,7 +224,7 @@ void SettingsPage::changeOption(unsigned int pos) {
 	SettingsOption* ptr = SettingsOption::getItemAtIndex(pos);
 	if (ptr == nullptr) return;
 
-	if (ptr->changeValue()) {
+	if (ptr->modify()) {
 		ptr->drawValue(SettingsOption::getPositionOf(ptr) - startingItem);
 	}
 }

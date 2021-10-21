@@ -3,8 +3,6 @@
 void ShowPaste();
 void ShowResetDefaults();
 
-using OptionMode = SettingsOption::OptionMode;
-
 // "Switch Paste" menu option
 String getSwitchPaste() {
 	return "";
@@ -14,7 +12,7 @@ void changeSwitchPaste() {
 	ShowPaste();
 }
 
-SettingsOption OptionPasteMenu("SWITCH PASTE", "Select which profile to reflow", getSwitchPaste, changeSwitchPaste, OptionMode::Select);
+SettingsOptionLink OptionPasteMenu("SWITCH PASTE", "Select which profile to reflow", getSwitchPaste, changeSwitchPaste);
 
 
 // "Use Fan" menu option
@@ -26,7 +24,7 @@ void changeUseFan() {
 	set.useFan = !set.useFan;
 }
 
-SettingsOption OptionUseFan("USE FAN", "Enable fan for end of reflow, requires 5V DC fan", getUseFan, changeUseFan, OptionMode::Change);
+SettingsOptionToggle OptionUseFan("USE FAN", "Enable fan for end of reflow, requires 5V DC fan", getUseFan, changeUseFan);
 
 
 // "Fan Countdown" menu option
@@ -40,7 +38,7 @@ void changeFanCountdown() {
 		set.fanTimeAfterReflow = 0;
 }
 
-SettingsOption OptionFanCountdown("FAN COUNTDOWN", "Keep fan on for XXX sec after reflow", getFanCountdown, changeFanCountdown, OptionMode::Change);
+SettingsOptionAdjust OptionFanCountdown("FAN COUNTDOWN", "Keep fan on for XXX sec after reflow", getFanCountdown, changeFanCountdown);
 
 
 // "Graph Look Ahead" menu option
@@ -54,7 +52,7 @@ void changeGraphLookAhead() {
 		set.lookAhead = 1;
 }
 
-SettingsOption OptionGraphLookAhead("GRAPH LOOK AHEAD", "Soak and Reflow look ahead for rate change speed", getGraphLookAhead, changeGraphLookAhead, OptionMode::Change);
+SettingsOptionAdjust OptionGraphLookAhead("GRAPH LOOK AHEAD", "Soak and Reflow look ahead for rate change speed", getGraphLookAhead, changeGraphLookAhead);
 
 
 // "Power" menu option
@@ -68,7 +66,7 @@ void changePower() {
 		set.power = 0.5;
 }
 
-SettingsOption OptionPower("POWER", "Adjust the power boost", getPower, changePower, OptionMode::Change);
+SettingsOptionAdjust OptionPower("POWER", "Adjust the power boost", getPower, changePower);
 
 
 // "Temp Offset" menu option
@@ -82,7 +80,7 @@ void changeTempOffset() {
 		set.tempOffset = -15;
 }
 
-SettingsOption OptionTempOffset("TEMP OFFSET", "Adjust temp probe reading offset", getTempOffset, changeTempOffset, OptionMode::Change);
+SettingsOptionAdjust OptionTempOffset("TEMP OFFSET", "Adjust temp probe reading offset", getTempOffset, changeTempOffset);
 
 
 // "Start Ramp 100%" menu option
@@ -94,7 +92,7 @@ void changeStartFullBlast() {
 	set.startFullBlast = !set.startFullBlast;
 }
 
-SettingsOption OptionStartFullBlast("START RAMP 100%", "Force full power on initial ramp-up - be careful!", getStartFullBlast, changeStartFullBlast, OptionMode::Change);
+SettingsOptionToggle OptionStartFullBlast("START RAMP 100%", "Force full power on initial ramp-up - be careful!", getStartFullBlast, changeStartFullBlast);
 
 
 // "Bake Temp Gap" menu option
@@ -108,7 +106,7 @@ void changeBakeTempGap() {
 		set.bakeTempGap = 0;
 }
 
-SettingsOption OptionBakeTempGap("BAKE TEMP GAP", "Bake thermal mass adjustment, higher for more mass", getBakeTempGap, changeBakeTempGap, OptionMode::Change);
+SettingsOptionAdjust OptionBakeTempGap("BAKE TEMP GAP", "Bake thermal mass adjustment, higher for more mass", getBakeTempGap, changeBakeTempGap);
 
 
 // "Key Tone" menu option
@@ -120,7 +118,7 @@ void setKeyToneSetting() {
 	set.keyTone = !set.keyTone;
 }
 
-SettingsOption OptionKeyTone("KEY TONE", "Make a noise whenever a button is pressed", getKeyToneSetting, setKeyToneSetting, OptionMode::Change);
+SettingsOptionToggle OptionKeyTone("KEY TONE", "Make a noise whenever a button is pressed", getKeyToneSetting, setKeyToneSetting);
 
 
 // "Disable Buzzer" menu option
@@ -132,7 +130,7 @@ void setBuzzerSetting() {
 	set.beep = !set.beep;
 }
 
-SettingsOption OptionBuzzer("DISABLE BUZZER", "Disable buzzer noise in ALL modes", getBuzzerSetting, setBuzzerSetting, OptionMode::Change);
+SettingsOptionToggle OptionBuzzer("DISABLE BUZZER", "Disable buzzer noise in ALL modes", getBuzzerSetting, setBuzzerSetting);
 
 
 // ############################################################################
@@ -146,4 +144,4 @@ void goToResetDefaults() {
 	ShowResetDefaults();
 }
 
-SettingsOption OptionResetToDefaults("RESET TO DEFAULTS", "Reset to default settings", getResetToDefaults, goToResetDefaults, OptionMode::Select);
+SettingsOptionLink OptionResetToDefaults("RESET TO DEFAULTS", "Reset to default settings", getResetToDefaults, goToResetDefaults);
