@@ -49,6 +49,8 @@ void SettingsOption::drawItem(unsigned int position) {
 }
 
 void SettingsOption::drawValue(unsigned int position) {
+	if (getFunction == nullptr) return;  // no string, so no need to draw it
+
 	const unsigned int yPos = getYPosition(position);
 
 	int16_t nameX, dummyY;
@@ -88,6 +90,12 @@ void SettingsOption::drawDescription() {
 	int textPosY = tft.height() - height_text;
 	println_Center(tft, this->ItemDescription, tft.width() / 2, textPosY);
 }
+
+
+SettingsOptionLink::SettingsOptionLink(const String& name, const String& desc, MenuSetFunc set)
+	// skipping over the 'get' function
+	: SettingsOption(name, desc, nullptr, set) {}
+
 
 namespace SettingsPage {
 	enum class ScrollType {

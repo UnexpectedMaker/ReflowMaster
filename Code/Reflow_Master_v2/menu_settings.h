@@ -73,7 +73,7 @@ private:
 
 class SettingsOptionLink : public SettingsOption {
 public:
-	using SettingsOption::SettingsOption;
+	SettingsOptionLink(const String& name, const String& desc, MenuSetFunc set);
 
 	String getModeString() const { return "SELECT"; }
 

@@ -4,15 +4,7 @@ void ShowPaste();
 void ShowResetDefaults();
 
 // "Switch Paste" menu option
-String getSwitchPaste() {
-	return "";
-}
-
-void changeSwitchPaste() {
-	ShowPaste();
-}
-
-SettingsOptionLink OptionPasteMenu("SWITCH PASTE", "Select which profile to reflow", getSwitchPaste, changeSwitchPaste);
+SettingsOptionLink OptionPasteMenu("SWITCH PASTE", "Select which profile to reflow", ShowPaste);
 
 
 // "Use Fan" menu option
@@ -148,12 +140,4 @@ SettingsOptionToggle OptionStartupTune("STARTUP TUNE", "Play a little song on st
 // ############################################################################
 
 // "Reset to defaults" menu option
-String getResetToDefaults() {
-	return "";
-}
-
-void goToResetDefaults() {
-	ShowResetDefaults();
-}
-
-SettingsOptionLink OptionResetToDefaults("RESET TO DEFAULTS", "Reset to default settings", getResetToDefaults, goToResetDefaults);
+SettingsOptionLink OptionResetToDefaults("RESET TO DEFAULTS", "Reset to default settings", ShowResetDefaults);
