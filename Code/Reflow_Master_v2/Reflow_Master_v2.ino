@@ -809,7 +809,9 @@ void ReadCurrentTempAvg()
   }
   else
   {
-    tcError = 0;
+    tcError = 0
+    // required by the TC to get the correct compensated value back 
+    float internal = tc.getInternal();
     currentTempAvg += tc.getTemperature() + set.tempOffset;
     avgReadCount++;
   }
@@ -828,6 +830,8 @@ void ReadCurrentTemp()
   else
   {
     tcError = 0;
+    // required by the TC to get the correct compensated value back 
+    float internal = tc.getInternal();
     currentTemp = tc.getTemperature() + set.tempOffset;
     currentTemp =  constrain(currentTemp, -10, 350);
 
