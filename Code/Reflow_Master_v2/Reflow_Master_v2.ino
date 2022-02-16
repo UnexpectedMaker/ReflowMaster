@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v2.02 - 20/12/2020.
+  Reflow Master Control - v2.04 - 31/10/2021.
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -41,7 +41,9 @@
                     - Fixed some incorrect comments 
                     - Made TC error more visible
   21/12/2020 v2.02  - Fixed UI glitch in main menu with TC error display
-  ---------------------------------------------------------------------------
+  12/05/2021 v2.03  - Increased BAKE max Temperature to 150deg C
+  31/10/2021 v2.04  - Some code cleanup and optimisations and merge of fixes from @dmadison
+  -----------------------------------------------------------------------------------------
 */
 
 /*
@@ -143,7 +145,7 @@ enum states {
   ABORT = 99
 } state;
 
-const String ver = "2.02";
+const String ver = "2.04";
 bool newSettings = false;
 
 // TC variables
@@ -163,7 +165,7 @@ int lastTempDirection = 0;
 long minBakeTime = 600; // 10 mins in seconds
 long maxBakeTime = 10800; // 3 hours in seconds
 float minBakeTemp = 45; // 45 Degrees C
-float maxBakeTemp = 100; // 100 Degrees C
+float maxBakeTemp = 150; // 100 Degrees C
 
 // Current index in the settings screen
 int settings_pointer = 0;
@@ -172,6 +174,7 @@ int settings_pointer = 0;
 // Increase this array if you plan to add more
 ReflowGraph solderPaste[5];
 // Index into the current profile
+
 int currentGraphIndex = 0;
 
 // Calibration data - currently diabled in this version
@@ -810,7 +813,7 @@ void ReadCurrentTempAvg()
   else
   {
     tcError = 0;
-    tc.getInternal();   // required by the TC to get the correct compensated value back 
+    tc.getInternal(); // required by the TC to get the correct compensated value back
     currentTempAvg += tc.getTemperature() + set.tempOffset;
     avgReadCount++;
   }
@@ -829,7 +832,7 @@ void ReadCurrentTemp()
   else
   {
     tcError = 0;
-    tc.getInternal();  // required by the TC to get the correct compensated value back 
+    tc.getInternal(); // required by the TC to get the correct compensated value back
     currentTemp = tc.getTemperature() + set.tempOffset;
     currentTemp =  constrain(currentTemp, -10, 350);
 
@@ -1778,7 +1781,7 @@ void ShowOvenCheck()
   state = OVENCHECK;
   SetRelayFrequency( 0 );
   StartFan( true );
-
+  
   debug_println("Oven Check");
 
   tft.fillScreen(BLACK);
