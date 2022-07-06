@@ -1,6 +1,6 @@
 /*
   ---------------------------------------------------------------------------
-  Reflow Master Control - v2.04 - 31/10/2021.
+  Reflow Master Control - v2.05 - 07/07/2022
 
   AUTHOR/LICENSE:
   Created by Seon Rozenblum - seon@unexpectedmaker.com
@@ -8,7 +8,7 @@
 
   LINKS:
   Project home: github.com/unexpectedmaker/reflowmaster
-  Blog: unexpectedmaker.com
+  Blog: unexpectedmaker.comYes, 
 
   PURPOSE:
   This controller is the software that runs on the Reflow Master toaster oven controller made by Unexpected Maker
@@ -43,7 +43,8 @@
   21/12/2020 v2.02  - Fixed UI glitch in main menu with TC error display
   12/05/2021 v2.03  - Increased BAKE max Temperature to 150deg C
   31/10/2021 v2.04  - Some code cleanup and optimisations and merge of fixes from @dmadison
-  -----------------------------------------------------------------------------------------
+  07/07/2022 v2.05  - Fixed a compiler error with spline lib using latest Adafruit SAMD board definitions (>1.6.6)
+  -----------------------------------------------------------------------------------------------------------------
 */
 
 /*
@@ -145,7 +146,7 @@ enum states {
   ABORT = 99
 } state;
 
-const String ver = "2.04";
+const String ver = "2.05";
 bool newSettings = false;
 
 // TC variables

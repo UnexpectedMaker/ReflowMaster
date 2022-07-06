@@ -58,6 +58,7 @@ float Spline::value( float x )
       }
     }
   }
+  return _y[0];
 }
 
 float Spline::calc( float x, int i )
@@ -88,6 +89,7 @@ float Spline::calc( float x, int i )
         return hermite( t, _y[i], _y[i + 1], m0, m1, _x[i], _x[i + 1]);
       }
   }
+  return _y[i];
 }
 
 float Spline::hermite( float t, float p0, float p1, float m0, float m1, float x0, float x1 ) {
