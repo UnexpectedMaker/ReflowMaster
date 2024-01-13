@@ -31,7 +31,7 @@ I have included the STL files for the case and also the exhaust fan adapter I ma
 The TFT I am using is a 2.4" SPI TFT using the ILI9341 Driver available via...
 
 AliExpress
-http://s.click.aliexpress.com/e/bQYyZYRe
+https://s.click.aliexpress.com/e/_DevvrLr
 
 Ebay
 https://rover.ebay.com/rover/1/705-53470-19255-0/1?icep_id=114&ipn=icep&toolid=20004&campid=5338252684&mpre=https%3A%2F%2Fwww.ebay.com.au%2Fitm%2F2-4-240x320-SPI-TFT-LCD-Serial-240-320-ILI9341-PCB-Adapter-SD-Card-M52%2F291549777432%3FssPageName%3DSTRK%253AMEBIDX%253AIT%26_trksid%3Dp2057872.m2749.l2649
