@@ -53,12 +53,13 @@
 
 #include <SPI.h>
 #include "spline.h"
-#include "Adafruit_GFX.h" // Add from Library Manager
-#include "Adafruit_ILI9341.h" // Add from Library Manager
 #include "MAX31855.h"
 #include "OneButton.h" // Add from Library Manager
 #include "ReflowMasterProfile.h"
 #include "FlashStorage.h"
+
+#include "tft_display.h"
+#include "menu_settings.h"
 
 // used to obtain the size of an array of any type
 #define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
@@ -84,49 +85,6 @@
 #define BUZZER A4  // buzzer
 #define RELAY 5    // relay control
 #define FAN A5     // fan control
-
-// Just a bunch of re-defined colours
-#define BLUE      0x001F
-#define TEAL      0x0438
-#define GREEN     0x07E0
-#define CYAN      0x07FF
-#define RED       0xF800
-#define MAGENTA   0xF81F
-#define YELLOW    0xFFE0
-#define ORANGE    0xFC00
-#define PINK      0xF81F
-#define PURPLE    0x8010
-#define GREY      0xC618
-#define WHITE     0xFFFF
-#define BLACK     0x0000
-#define DKBLUE    0x000D
-#define DKTEAL    0x020C
-#define DKGREEN   0x03E0
-#define DKCYAN    0x03EF
-#define DKRED     0x6000
-#define DKMAGENTA 0x8008
-#define DKYELLOW  0x8400
-#define DKORANGE  0x8200
-#define DKPINK    0x9009
-#define DKPURPLE  0x4010
-#define DKGREY    0x4A49
-
-// Save data struct
-typedef struct {
-  boolean valid = false;
-  boolean useFan = false;
-  int fanTimeAfterReflow = 60;
-  byte paste = 0;
-  float power = 1;
-  int lookAhead = 6;
-  int lookAheadWarm = 1;
-  int tempOffset = 0;
-  long bakeTime = 1200; // 20 mins
-  float bakeTemp = 45; // Degrees C
-  int bakeTempGap = 3; // Aim for the desired temp minus this value to compensate for overrun
-  bool startFullBlast = false;
-  bool beep = true;
-} Settings;
 
 // UI and runtime states
 enum states {
@@ -228,9 +186,12 @@ OneButton button2(BUTTON2, false);
 OneButton button3(BUTTON3, false);
 
 // UI button positions and sizes
-int buttonPosY[] = { 19, 74, 129, 184 };
-int buttonHeight = 16;
-int buttonWidth = 4;
+const unsigned int buttonPosY[] = { 19, 74, 129, 184 };
+const unsigned int buttonHeight = 16;
+const unsigned int buttonWidth = 4;
+const uint32_t ButtonColor[] = { GREEN, RED, BLUE, YELLOW };
+const unsigned int NumButtons = ELEMENTS(buttonPosY);
+String buttonText[NumButtons];
 
 // Initiliase a reference for the settings file that we store in flash storage
 Settings set;
@@ -1066,6 +1027,7 @@ void Buzzer( int hertz, int len )
 // Startup Tune
 void BuzzerStart()
 {
+  if (!set.startupTune) return;
   tone( BUZZER, 262, 200);
   delay(210);
   tone( BUZZER, 523, 100);
@@ -1151,74 +1113,25 @@ void ShowMenu()
   tft.setCursor( 20, tft.height() - 20 );
   tft.println("Reflow Master - Code v" + String(ver));
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
-void ShowSettings()
+void ShowSettings(bool resetSelection = true);
+
+void ShowSettings(bool resetSelection)
 {
   state = SETTINGS;
   SetRelayFrequency( 0 );
 
   newSettings = false;
 
-  int posY = 45;
-  int incY = 19;
+  SettingsPage::drawPage(resetSelection);
+}
 
-  tft.setTextColor( BLUE, BLACK );
-  tft.fillScreen(BLACK);
-
-  tft.setTextColor( BLUE, BLACK );
-  tft.setTextSize(2);
-  tft.setCursor( 20, 20 );
-  tft.println( "SETTINGS" );
-
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-  tft.print( "SWITCH PASTE" );
-
-  posY += incY;
-
-  // y 64
-  UpdateSettingsFan( posY );
-
-  posY += incY;
-
-  // y 83
-  UpdateSettingsFanTime( posY );
-
-  posY += incY;
-
-  // y 102
-  UpdateSettingsLookAhead( posY );
-
-  posY += incY;
-
-  // y 121
-  UpdateSettingsPower( posY );
-
-  posY += incY;
-
-  // y 140
-  UpdateSettingsTempOffset( posY );
-
-  posY += incY;
-
-  // y 159
-  UpdateSettingsStartFullBlast( posY );
-
-  posY += incY;
-
-  // y 178
-  UpdateSettingsBakeTempGap( posY );
-
-  posY += incY;
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-  tft.print( "RESET TO DEFAULTS" );
-
-  posY += incY;
-
-  ShowMenuOptions( true );
+void ExitSettings()
+{
+  flash_store.write(set);
+  ShowMenu();
 }
 
 void ShowPaste()
@@ -1256,132 +1169,152 @@ void ShowPaste()
     y += 40;
   }
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
-void ShowMenuOptions( bool clearAll )
-{
-  //  int buttonPosY[] = { 19, 74, 129, 184 };
-  //  int buttonHeight = 16;
-  //  int buttonWidth = 4;
+void DrawButton(uint8_t index, const String& str, uint32_t textColor = WHITE, uint32_t boxColor = DEFAULT_COLOR);
 
+void DrawButton(uint8_t index, const String& str, uint32_t textColor, uint32_t boxColor)
+{
+  if (index >= NumButtons) return;
+
+  // if default, set colors based on button index
+  if (boxColor == DEFAULT_COLOR) boxColor = ButtonColor[index];
+
+  tft.setTextColor(textColor, BLACK);
+  tft.setTextSize(2);
+
+  const int XPos = tft.width() - 27;
+  const int YPos = buttonPosY[index] + 9;
+
+  buttonText[index] = str;  // save text for reference
+  tft.fillRect(tft.width() - 5, buttonPosY[index], buttonWidth, buttonHeight, boxColor);  // color box
+  println_Right(tft, str, XPos, YPos);  // text
+}
+
+void ClearButton(uint8_t index, uint32_t color = BLACK);
+
+void ClearButton(uint8_t index, uint32_t color)
+{
+  tft.setTextSize(2);
+  tft.setTextColor(color);
+
+  const int XPos = tft.width() - 27;
+  const int YPos = buttonPosY[index] + 9;
+
+  println_Right(tft, buttonText[index], XPos, YPos);
+}
+
+void ShowButtonOptions( bool clearAll )
+{
   tft.setTextColor( WHITE, BLACK );
   tft.setTextSize(2);
 
   if ( clearAll )
   {
     // Clear All
-    for ( int i = 0; i < 4; i++ )
-      tft.fillRect( tft.width() - 95,  buttonPosY[i] - 2, 95, buttonHeight + 4, BLACK );
+    for ( uint8_t i = 0; i < NumButtons; i++ )
+      //tft.fillRect( tft.width() - 95,  buttonPosY[i] - 2, 95, buttonHeight + 4, BLACK );
+      ClearButton(i);  // overwrite text exactly
   }
 
   if ( state == MENU )
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "REFLOW", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BAKE", tft.width() - 27, buttonPosY[1] + 9 );
-
-    // button 2
-    tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-    println_Right( tft, "SETTINGS", tft.width() - 27, buttonPosY[2] + 9 );
-
-    // button 3
-    tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-    println_Right( tft, "OVEN CHECK", tft.width() - 27, buttonPosY[3] + 9 );
+    DrawButton(0, "REFLOW");
+    DrawButton(1, "BAKE");
+    DrawButton(2, "SETTINGS");
+    DrawButton(3, "OVEN CHECK");
   }
   else if ( state == SETTINGS )
   {
-    // button 0
-    tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    switch ( settings_pointer )
-    {
-
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-        println_Right( tft, "CHANGE", tft.width() - 27, buttonPosY[0] + 9 );
-        break;
-
-      default:
-        println_Right( tft, "SELECT", tft.width() - 27, buttonPosY[0] + 9 );
-        break;
-    }
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
-
-    // button 2
-    tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-    println_Right( tft, "/\\", tft.width() - 27, buttonPosY[2] + 9 );
-
-    // button 3
-    tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-    println_Right( tft, "\\/", tft.width() - 27, buttonPosY[3] + 9 );
-
-    UpdateSettingsPointer();
+    DrawButton(0, SettingsPage::getButtonText());
+    DrawButton(1, "BACK");
+    DrawButton(2, "/\\");
+    DrawButton(3, "\\/");
   }
   else if ( state == SETTINGS_PASTE )
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "SELECT", tft.width() - 27, buttonPosY[0] + 9 );
+    DrawButton(0, "SELECT");
+    DrawButton(1, "BACK");
+    DrawButton(2, "/\\");
+    DrawButton(3, "\\/");
 
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
-
-    // button 2
-    tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-    println_Right( tft, "/\\", tft.width() - 27, buttonPosY[2] + 9 );
-
-    // button 3
-    tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-    println_Right( tft, "\\/", tft.width() - 27, buttonPosY[3] + 9 );
-
-    UpdateSettingsPointer();
+    DrawSettingsPointer();
   }
   else if ( state == SETTINGS_RESET ) // restore settings to default
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "YES", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "NO", tft.width() - 27, buttonPosY[1] + 9 );
+    DrawButton(0, "YES");
+    DrawButton(1, "NO");
   }
   else if ( state == WARMUP || state == REFLOW || state == OVENCHECK_START ) // warmup, reflow, calibration
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "ABORT", tft.width() - 27, buttonPosY[0] + 9 );
+    DrawButton(0, "ABORT");
   }
   else if ( state == FINISHED ) // Finished
   {
     tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "MENU", tft.width() - 27, buttonPosY[0] + 9 );
+    DrawButton(0, "MENU");
   }
   else if ( state == OVENCHECK )
   {
-    // button 0
-    tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-    println_Right( tft, "START", tft.width() - 27, buttonPosY[0] + 9 );
-
-    // button 1
-    tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-    println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
+    DrawButton(0, "START");
+    DrawButton(1, "BACK");
   }
+}
+
+void FlashButtonText(unsigned int index, uint32_t colorSteady = WHITE, uint32_t colorBlink = RED, unsigned int hertz = 5, unsigned int count = 2);
+
+void FlashButtonText(unsigned int index, uint32_t colorSteady, uint32_t colorBlink, unsigned int hertz, unsigned int count)
+{
+  if (index >= NumButtons) return;  // out of range
+  const unsigned long period = 1000 / (hertz * 2);  // in ms
+
+  for (unsigned int i = 0; i < count; i++) {
+    DrawButton(index, buttonText[index], colorBlink);
+    delay(period);
+    DrawButton(index, buttonText[index], colorSteady);
+    if(i != count - 1) delay(period);  // delay if not on last loop
+  }
+}
+
+void DrawScrollIndicator(float pct, uint32_t color)
+{
+	     if (pct < 0.0) pct = 0.0;
+	else if (pct > 1.0) pct = 1.0;
+
+	const unsigned int Width = 15;  // all values in pixels
+	const unsigned int Height = 3;
+	const unsigned int MarginY = 2;
+
+	const unsigned int XPos = tft.width() - (Width * 2);
+	const unsigned int YMin = buttonPosY[2] + buttonHeight + MarginY;  // inside edge
+	const unsigned int YMax = buttonPosY[3] - MarginY;  // outside edge
+
+	const unsigned int YRange = YMax - YMin;  // total range + number of options
+
+	const unsigned int yPos = (pct * (float) YRange) + YMin;  // position of indicator
+
+	tft.fillRect(XPos, YMin, Width, YMax - YMin + Height, BLACK);  // clear area
+	tft.fillRect(XPos + Width / 2, YMin, 1, YMax - YMin + Height, WHITE);  // draw center line
+	tft.fillRect(XPos, yPos, Width, Height, color);  // draw indicator
+}
+
+void DrawPageIndicator(unsigned int page, unsigned int numPages, uint32_t color)
+{
+	const unsigned int TextWidth = 31;  // total width from right edge, ballpark
+	const unsigned int TextHeight = 8;  // with text size '1'
+	const unsigned int XPos = tft.width() - TextWidth;  // left edge
+	const unsigned int YPos = (buttonPosY[2] + buttonPosY[3]) / 2 + (TextHeight / 2);
+
+	tft.fillRect(XPos, YPos, TextWidth, TextHeight, BLACK);  // clear area
+
+	tft.setTextColor(color, BLACK);
+	tft.setTextSize(1);
+	tft.setCursor(XPos, YPos);
+
+	tft.print(page);
+	tft.print('/');
+	tft.print(numPages);
 }
 
 void UpdateBakeMenu()
@@ -1416,22 +1349,11 @@ void ShowBakeMenu()
 
 
   tft.fillRect( tft.width() - 100,  buttonPosY[0] - 2, 100, buttonHeight + 4, BLACK );
-  // button 0
 
-  tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-  println_Right( tft, "START", tft.width() - 27, buttonPosY[0] + 9 );
-
-  // button 1
-  tft.fillRect( tft.width() - 5,  buttonPosY[1], buttonWidth, buttonHeight, RED );
-  println_Right( tft, "BACK", tft.width() - 27, buttonPosY[1] + 9 );
-
-  // button 2
-  tft.fillRect( tft.width() - 5,  buttonPosY[2], buttonWidth, buttonHeight, BLUE );
-  println_Right( tft, "+TEMP", tft.width() - 27, buttonPosY[2] + 9 );
-
-  // button 3
-  tft.fillRect( tft.width() - 5,  buttonPosY[3], buttonWidth, buttonHeight, YELLOW );
-  println_Right( tft, "+TIME", tft.width() - 27, buttonPosY[3] + 9 );
+  DrawButton(0, "START");
+  DrawButton(1, "BACK");
+  DrawButton(2, "+TEMP");
+  DrawButton(3, "+TIME");
 
   UpdateBakeMenu();
 }
@@ -1499,9 +1421,7 @@ void StartBake()
   tft.setCursor( 20, 135 );
   tft.println( "TIME LEFT");
 
-  // button 0
-  tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-  println_Right( tft, "ABORT", tft.width() - 27, buttonPosY[0] + 9 );
+  DrawButton(0, "ABORT");
 
   UpdateBake();
 }
@@ -1533,75 +1453,16 @@ void BakeDone()
   tft.setTextColor( WHITE, BLACK );
   tft.setTextSize(2);
 
-  // button 0
-  tft.fillRect( tft.width() - 5,  buttonPosY[0], buttonWidth, buttonHeight, GREEN );
-  println_Right( tft, "MENU", tft.width() - 27, buttonPosY[0] + 9 );
+  DrawButton(0, "MENU");
 
   delay(750);
   Buzzer( 2000, 500 );
 
 }
 
-void UpdateSettingsPointer()
+void DrawSettingsPointer()
 {
-  if ( state == SETTINGS )
-  {
-    tft.setTextColor( BLUE, BLACK );
-    tft.setTextSize(2);
-    tft.fillRect( 0, 20, 20, tft.height() - 20, BLACK );
-    tft.setCursor( 5, ( 45 + ( 19 * settings_pointer ) ) );
-    tft.println(">");
-
-    tft.setTextSize(1);
-    tft.setTextColor( GREEN, BLACK );
-    tft.fillRect( 0, tft.height() - 20, tft.width(), 20, BLACK );
-
-    int testPosY = tft.height() - 16;
-    switch ( settings_pointer )
-    {
-      case 0:
-        println_Center( tft, "Select which profile to reflow", tft.width() / 2, testPosY );
-        break;
-
-      case 1:
-        println_Center( tft, "Enable fan for end of reflow, requires 5V DC fan", tft.width() / 2, testPosY );
-        break;
-
-      case 2:
-        println_Center( tft, "Keep fan on for XXX sec after reflow", tft.width() / 2, testPosY );
-        break;
-
-      case 3:
-        println_Center( tft, "Soak and Reflow look ahead for rate change speed", tft.width() / 2, testPosY );
-        break;
-
-      case 4:
-        println_Center( tft, "Adjust the power boost", tft.width() / 2, testPosY );
-        break;
-
-      case 5:
-        println_Center( tft, "Adjust temp probe reading offset", tft.width() / 2, testPosY );
-        break;
-
-      case 6:
-        println_Center( tft, "Force full power on initial ramp-up - be careful!", tft.width() / 2, testPosY );
-        break;
-
-      case 7:
-        println_Center( tft, "Bake thermal mass adjustment, higher for more mass", tft.width() / 2, testPosY );
-        break;
-
-      case 8:
-        println_Center( tft, "Reset to default settings", tft.width() / 2, testPosY );
-        break;
-
-      default:
-        //println_Center( tft, "", tft.width() / 2, tft.height() - 20 );
-        break;
-    }
-    tft.setTextSize(2);
-  }
-  else if ( state == SETTINGS_PASTE )
+  if ( state == SETTINGS_PASTE )
   {
     tft.setTextColor( BLUE, BLACK );
     tft.setTextSize(2);
@@ -1617,7 +1478,7 @@ void StartWarmup()
 
   state = WARMUP;
   timeX = 0;
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
   lastWantedTemp = -1;
   buzzerCount = 5;
   keepFanOnTime = 0;
@@ -1641,7 +1502,7 @@ void StartReflow()
   tft.fillScreen(BLACK);
 
   state = REFLOW;
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 
   timeX = 0;
   SetupGraph(tft, 0, 0, 30, 220, 270, 180, graphRangeMin_X, graphRangeMax_X, graphRangeStep_X, graphRangeMin_Y, graphRangeMax_Y, graphRangeStep_Y, "Reflow Temp", " Time [s]", "deg [C]", DKBLUE, BLUE, WHITE, BLACK );
@@ -1691,7 +1552,7 @@ void EndReflow()
 
     DrawHeading( "DONE!", WHITE, BLACK );
 
-    ShowMenuOptions( false );
+    ShowButtonOptions( false );
 
     if ( set.useFan && set.fanTimeAfterReflow > 0 )
     {
@@ -1709,20 +1570,8 @@ void EndReflow()
 
 void SetDefaults()
 {
-  // Default settings values
-  set.valid = true;
-  set.fanTimeAfterReflow = 60;
-  set.power = 1;
-  set.paste = 0;
-  set.useFan = false;
-  set.lookAhead = 7;
-  set.lookAheadWarm = 7;
-  set.startFullBlast = false;
-  set.tempOffset = 0;
-  set.beep = true;
-  set.bakeTime = 1200;
-  set.bakeTemp = 45;
-  set.bakeTempGap = 3;
+  // recreate struct using default constructor
+  set = Settings();
 }
 
 void ResetSettingsToDefault()
@@ -1735,7 +1584,6 @@ void ResetSettingsToDefault()
   SetCurrentGraph( set.paste );
 
   // show settings
-  settings_pointer = 0;
   ShowSettings();
 }
 
@@ -1774,7 +1622,7 @@ void StartOvenCheck()
   tft.setCursor( 20, 60 );
   tft.println( String(CurrentGraph().tempDeg) + "deg");
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 }
 
 void ShowOvenCheck()
@@ -1794,7 +1642,7 @@ void ShowOvenCheck()
 
   tft.setTextColor( WHITE, BLACK );
 
-  ShowMenuOptions( true );
+  ShowButtonOptions( true );
 
   tft.setTextSize(2);
   tft.setCursor( 0, 60 );
@@ -1838,7 +1686,7 @@ void ShowResetDefaults()
   tft.println( "ARE YOU SURE?" );
 
   state = SETTINGS_RESET;
-  ShowMenuOptions( false );
+  ShowButtonOptions( false );
 
   tft.setTextSize(1);
   tft.setTextColor( GREEN, BLACK );
@@ -1846,112 +1694,32 @@ void ShowResetDefaults()
   println_Center( tft, "Settings restore cannot be undone!", tft.width() / 2, tft.height() - 20 );
 }
 
-void UpdateSettingsFan( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 200, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-
-  tft.setTextColor( WHITE, BLACK );
-  tft.print( "USE FAN " );
-  tft.setTextColor( YELLOW, BLACK );
-
-  if ( set.useFan )
-  {
-    tft.println( "ON" );
-  }
-  else
-  {
-    tft.println( "OFF" );
-  }
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsFanTime( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 230, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-
-  tft.setTextColor( WHITE, BLACK );
-  tft.print( "FAN COUNTDOWN " );
-  tft.setTextColor( YELLOW, BLACK );
-
-  tft.println( String( set.fanTimeAfterReflow ) + "s");
-
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsStartFullBlast( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 240, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-  tft.setCursor( 20, posY );
-  tft.print( "START RAMP 100% " );
-  tft.setTextColor( YELLOW, BLACK );
-
-  if ( set.startFullBlast )
-  {
-    tft.println( "ON" );
-  }
-  else
-  {
-    tft.println( "OFF" );
-  }
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsPower( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 240, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "POWER ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( round((set.power * 100))) + "%");
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsLookAhead( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 260, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "GRAPH LOOK AHEAD ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( set.lookAhead) );
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsBakeTempGap( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 260, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "BAKE TEMP GAP ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( set.bakeTempGap ) );
-  tft.setTextColor( WHITE, BLACK );
-}
-
-void UpdateSettingsTempOffset( int posY )
-{
-  tft.fillRect( 15,  posY - 5, 220, 20, BLACK );
-  tft.setTextColor( WHITE, BLACK );
-
-  tft.setCursor( 20, posY );
-  tft.print( "TEMP OFFSET ");
-  tft.setTextColor( YELLOW, BLACK );
-  tft.println( String( set.tempOffset) );
-  tft.setTextColor( WHITE, BLACK );
-}
-
 /*
    Button press code here
 */
+
+void KeyTone(int hertz, int len)
+{
+  if (!set.keyTone) return;
+  Buzzer(hertz, len);
+}
+
+// returns the a value limited to the min and max ranges, rolling over
+// values below and above the provided range as if it was continuous
+int constrainLoop(int value, int min, int max)
+{
+	// rollover up
+	if (value > max) {
+		int diff = (value - max - 1) % (max - min + 1);
+		return constrain(min + diff, min, max);
+	}
+	// rollover down
+	else if (value < min) {
+		int diff = (value - min + 1) % (max - min + 1);
+		return constrain(max + diff, min, max);
+	}
+	return value;
+}
 
 unsigned long nextButtonPress = 0;
 
@@ -1960,15 +1728,17 @@ void button0Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
         StartWarmup();
-      else
-        Buzzer( 100, 250 );
+      else {
+        Buzzer(100, 250);
+        FlashButtonText(0);
+      }
     }
     else if ( state == BAKE_MENU )
     {
@@ -1986,67 +1756,7 @@ void button0Press()
     }
     else if ( state == SETTINGS )
     {
-      if ( settings_pointer == 0 )  // change paste
-      {
-        settings_pointer = set.paste;
-        ShowPaste();
-      }
-      else if ( settings_pointer == 1 )  // switch fan use
-      {
-        set.useFan = !set.useFan;
-
-        UpdateSettingsFan( 64 );
-      }
-      else if ( settings_pointer == 2 ) // fan countdown after reflow
-      {
-        set.fanTimeAfterReflow += 5;
-        if ( set.fanTimeAfterReflow > 60 )
-          set.fanTimeAfterReflow = 0;
-
-        UpdateSettingsFanTime( 83 );
-      }
-      else if ( settings_pointer == 3 ) // change lookahead for reflow
-      {
-        set.lookAhead += 1;
-        if ( set.lookAhead > 15 )
-          set.lookAhead = 1;
-
-        UpdateSettingsLookAhead( 102 );
-      }
-      else if ( settings_pointer == 4 ) // change power
-      {
-        set.power += 0.1;
-        if ( set.power > 1.55 )
-          set.power = 0.5;
-
-        UpdateSettingsPower( 121 );
-      }
-      else if ( settings_pointer == 5 ) // change temp probe offset
-      {
-        set.tempOffset += 1;
-        if ( set.tempOffset > 15 )
-          set.tempOffset = -15;
-
-        UpdateSettingsTempOffset( 140 );
-      }
-      else if ( settings_pointer == 6 ) // change use full power on initial ramp
-      {
-        set.startFullBlast = !set.startFullBlast;
-
-        UpdateSettingsStartFullBlast( 159 );
-      }
-      else if ( settings_pointer == 7 ) // bake temp gap
-      {
-        set.bakeTempGap += 1;
-        if ( set.bakeTempGap > 5 )
-          set.bakeTempGap = 0;
-
-        UpdateSettingsBakeTempGap( 178 );
-      }
-      else if ( settings_pointer == 8 ) // reset defaults
-      {
-        ShowResetDefaults();
-      }
+      SettingsPage::pressButton(0);
     }
     else if ( state == SETTINGS_PASTE )
     {
@@ -2073,26 +1783,30 @@ void button1Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
         ShowBakeMenu();
-      else
+      else {
         Buzzer( 100, 250 );
+        FlashButtonText(1);
+      }
     }
     else if ( state == SETTINGS ) // leaving settings so save
     {
-      // save data in flash
-      flash_store.write(set);
-      ShowMenu();
+      SettingsPage::pressButton(1);
     }
-    else if ( state == SETTINGS_PASTE || state == SETTINGS_RESET )
+    else if ( state == SETTINGS_PASTE)
     {
-      settings_pointer = 0;
+      settings_pointer = 0;  // reset pointer so we stop at the top of the settings list
       ShowSettings();
+    }
+    else if (state == SETTINGS_RESET)  // cancel settings reset
+    {
+      ShowSettings(false);  // do *not* reset pagination
     }
     else if ( state == OVENCHECK ) // cancel oven check
     {
@@ -2111,7 +1825,7 @@ void button2Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
@@ -2128,14 +1842,12 @@ void button2Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrain( settings_pointer - 1, 0, 8 );
-      ShowMenuOptions( false );
-      //UpdateSettingsPointer();
+      SettingsPage::pressButton(2);
     }
     else if ( state == SETTINGS_PASTE )
     {
       settings_pointer = constrain( settings_pointer - 1, 0, (int) ELEMENTS(solderPaste) - 1 );
-      UpdateSettingsPointer();
+      DrawSettingsPointer();
     }
   }
 }
@@ -2146,15 +1858,17 @@ void button3Press()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 50 );
+    KeyTone( 2000, 50 );
 
     if ( state == MENU )
     {
       // Only allow reflow start if there is no TC error
       if ( tcError == 0 )
         ShowOvenCheck();
-      else
+      else {
         Buzzer( 100, 250 );
+        FlashButtonText(3);
+      }
     }
     else if ( state == BAKE_MENU )
     {
@@ -2166,14 +1880,12 @@ void button3Press()
     }
     else if ( state == SETTINGS )
     {
-      settings_pointer = constrain( settings_pointer + 1, 0, 8 );
-      ShowMenuOptions( false );
-      //UpdateSettingsPointer();
+      SettingsPage::pressButton(3);
     }
     else if ( state == SETTINGS_PASTE )
     {
       settings_pointer = constrain( settings_pointer + 1, 0, (int) ELEMENTS(solderPaste) - 1 );
-      UpdateSettingsPointer();
+      DrawSettingsPointer();
     }
   }
 }
@@ -2184,9 +1896,9 @@ void button2LongPressStart()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 10;
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
     delay(50);
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
   }
 }
 
@@ -2213,9 +1925,9 @@ void button3LongPressStart()
   if ( nextButtonPress < millis() )
   {
     nextButtonPress = millis() + 20;
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
     delay(50);
-    Buzzer( 2000, 10 );
+    KeyTone( 2000, 10 );
   }
 }
 
