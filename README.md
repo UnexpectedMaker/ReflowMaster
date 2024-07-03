@@ -1,7 +1,9 @@
 # ReflowMaster
 
-Reflow Master is my open source toaster oven reflow controller that I also sell full assembled on tindie:
+ReflowMaster is my original open source toaster oven reflow controller that I used to sell on tindie:
 https://www.tindie.com/products/13378/
+
+### This project is not compatible with ReflowMasterPro
 
 ![Reflow Master](http://3sprockets.com.au/um/projects/reflowmaster/Pict_01.jpg)
 
